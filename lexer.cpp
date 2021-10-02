@@ -116,8 +116,9 @@ void getSymbol() {
     getChar();
 };
 
-int main() {
-    file = fopen("test.txt","r");
+int main(int argh, char * argv[]) {
+//     file = fopen("test.txt","r");
+    file = fopen(argv[1],"r");
     // 读取文件字符存入字符数组s
     while(1) {
         c = fgetc(file);
