@@ -11,7 +11,7 @@ using namespace std;
 // continue	
 // return
 // =	Assign	
-// 分号	;	Srmicolon	
+// 分号	;	Semicolon	
 // 左括号	(	LPar	
 // 右括号	)	RPar	
 // 左大括号	{	LBrace	
@@ -44,7 +44,7 @@ bool isLetter()           { return islower(tmp)||isupper(tmp); };// 字母
 bool isDigit()            { return tmp>='0' && tmp<='9'; };// 数字
 
 bool isAssign()           { return tmp=='='?true:false; };  // =
-bool isSrmicolon()        { return tmp==';'?true:false; };  // ;
+bool isSemicolon()        { return tmp==';'?true:false; };  // ;
 bool isLpar()             { return tmp=='('?true:false; };  // (
 bool isRpar()             { return tmp==')'?true:false; };  // )
 bool isLbrace()           { return tmp=='{'?true:false; };  // {
@@ -102,7 +102,7 @@ void getSymbol() {
             symbol = "Assign";
         }
     }
-    else if( isSrmicolon() ) { symbol = "Srmicolon"; }
+    else if( isSemicolon() ) { symbol = "Semicolon"; }
     else if( isLpar() ) { symbol = "LPar"; }
     else if( isRpar() ) { symbol = "RPar"; }
     else if( isLbrace() ) { symbol = "LBrace"; }
