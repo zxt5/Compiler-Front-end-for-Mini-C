@@ -112,6 +112,7 @@ void getSymbol() {
     else if( isDiv() ) { symbol = "Div"; }
     else if( isLt() ) { symbol = "Lt"; }
     else if( isGt() ) { symbol = "Gt"; }
+    else if(tmp=='\0'){ exit(0);}	
     else symbol = "Err";
     getChar();
 };
