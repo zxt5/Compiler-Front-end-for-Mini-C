@@ -130,7 +130,10 @@ int main(int argh, char *argv[]) {
     while(tmp != '\0') {
         getSymbol();
         if(symbol == "Ident" || symbol == "Number") cout<<symbol<<'('<<token<<')'<<endl;
-//        else if(symbol == "Number") cout<<symbol<<'('<<token<<')'<<endl;
+        else if(symbol == "Err") {
+        	cout<<symbol<<endl;
+        	return 0;
+		}
         else cout<<symbol<<endl;
     }
 }
