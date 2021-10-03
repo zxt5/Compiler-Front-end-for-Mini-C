@@ -127,7 +127,7 @@ int main(int argh, char *argv[]) {
     }
     s[n] = '\0';
     flag = s;
-    while(*flag != '\0') {
+    while(tmp != '\0') {
         getSymbol();
         if(symbol == "Ident" || symbol == "Number") cout<<symbol<<'('<<token<<')'<<endl;
 //        else if(symbol == "Number") cout<<symbol<<'('<<token<<')'<<endl;
