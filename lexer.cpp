@@ -116,7 +116,7 @@ void getSymbol() {
     getChar();
 };
 
-int main(int argh, char **argv[]) {
+int main(int argh, char *argv[]) {
 //     file = fopen("test.txt","r");
     file = fopen(argv[1],"r");
     // 读取文件字符存入字符数组s
