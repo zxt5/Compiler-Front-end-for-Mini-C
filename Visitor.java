@@ -37,16 +37,16 @@ public class Visitor extends compUnitBaseVisitor<Void> {
                 num = num.toLowerCase();
                 for (int i = 2; i < num.length(); i++) {
                     if (num.charAt(i) >= '0' && num.charAt(i) <= '9') {
-                        val += 16 * val + num.charAt(i) - 48;
+                        val += 16 * val + (int)num.charAt(i) - 48;
                     } else {
-                        val += 16 * val + num.charAt(i) - 'a' + 10;
+                        val += 16 * val + ((int)num.charAt(i) - 'a') + 10;
                     }
                     ans += val;
                 }
             }
             else {
                 for( int i = 1 ; i < num.length() ; i++ ) {
-                    val += 8 * val + num.charAt(i) - 48;
+                    val += 8 * val + (int)num.charAt(i) - 48;
                 }
                 ans += val;
             }
