@@ -41,8 +41,8 @@ public class Visitor extends compUnitBaseVisitor<Void> {
                     } else {
                         val += 16 * val + ((int)num.charAt(i) - 'a') + 10;
                     }
-                    ans += val;
                 }
+                ans += val;
             }
             else {
                 for( int i = 1 ; i < num.length() ; i++ ) {
