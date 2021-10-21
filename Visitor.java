@@ -30,29 +30,32 @@ public class Visitor extends compUnitBaseVisitor<Void> {
     @Override
     public Void visitStmt(compUnitParser.StmtContext ctx) {
         ans += "ret i32 ";
-        int val = 0;
-        String num = ctx.Number().getText();
-        if (num.charAt(0)=='0'){
-            if(num.charAt(1)=='x'||num.charAt(1)=='X') {
-                num = num.toLowerCase();
-                for (int i = 2; i < num.length(); i++) {
-                    if (num.charAt(i) >= '0' && num.charAt(i) <= '9') {
-                        val += 16 * val + (int)num.charAt(i) - 48;
-                    } else {
-                        val += 16 * val + ((int)num.charAt(i) - 'a') + 10;
+        int res=0;
+        String s = ctx.Number().getText();
+        if (s.charAt(0)=='0'){
+            if(s.charAt(1)=='x'||s.charAt(1)=='X'){
+                int len = s.length();
+                s = s.toLowerCase();
+                for (int i=2;i<len;i++){
+                    if(s.charAt(i)>='0'&&s.charAt(i)<='9'){
+                        res=16*res+ (int) s.charAt(i)-48;
+                    }
+                    else if(s.charAt(i)>='a'&&s.charAt(i)<='z'){
+                        res=16*res +10+ ((int) s.charAt(i)-'a');
                     }
                 }
-                ans += val;
+                ans+=res;
             }
             else {
-                for( int i = 1 ; i < num.length() ; i++ ) {
-                    val += 8 * val + (int)num.charAt(i) - 48;
+                int len = s.length();
+                for(int i=1;i<len;i++){
+                    res=8*res+ (int) s.charAt(i)-48;
                 }
-                ans += val;
+                ans+=res;
             }
         }
         else {
-            ans += ctx.Number().getText();
+            ans+=ctx.Number().getText();
         }
         return null;
     }
