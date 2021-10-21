@@ -1,5 +1,5 @@
-FROM openjdk:8
+FROM openjdk:11
 WORKDIR /app/
 COPY * ./
-RUN export CLASSPATH="./antlr-4.9.2-complete.jar" && export CLASSPATH="./antlr4-runtime.jar" && javac *.java
-# RUN javac *.java
+RUN chmod 777 *
+RUN javac -cp .:antlr-4.9.2-complete.jar Main.java
