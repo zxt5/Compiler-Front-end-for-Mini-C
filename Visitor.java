@@ -1,3 +1,5 @@
+import java.util.Locale;
+
 public class Visitor extends compUnitBaseVisitor<Void> {
     public String ans = "";
     @Override
@@ -32,11 +34,12 @@ public class Visitor extends compUnitBaseVisitor<Void> {
         String num = ctx.Number().getText();
         if (num.charAt(0)=='0'){
             if(num.charAt(1)=='x'||num.charAt(1)=='X') {
-                for (int i = num.length(); i > 2; i--) {
+                num = num.toLowerCase();
+                for (int i = 2; i > num.length(); i++) {
                     if (num.charAt(i) >= '0' && num.charAt(i) <= '9') {
                         val += 16 * val + num.charAt(i) - 48;
                     } else {
-                        val += 16 * val + num.charAt(i) - 'a';
+                        val += 16 * val + num.charAt(i) - 'a' + 10;
                     }
                     ans += val;
                 }
