@@ -35,7 +35,7 @@ public class Visitor extends compUnitBaseVisitor<Void> {
         if (num.charAt(0)=='0'){
             if(num.charAt(1)=='x'||num.charAt(1)=='X') {
                 num = num.toLowerCase();
-                for (int i = 2; i > num.length(); i++) {
+                for (int i = 2; i < num.length(); i++) {
                     if (num.charAt(i) >= '0' && num.charAt(i) <= '9') {
                         val += 16 * val + num.charAt(i) - 48;
                     } else {
