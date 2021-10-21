@@ -1,4 +1,4 @@
-FROM openjdk:11
+FROM openjdk:15
 WORKDIR /app/
 COPY * ./
 RUN chmod 777 *
