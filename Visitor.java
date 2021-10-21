@@ -9,7 +9,7 @@ public class Visitor extends compUnitBaseVisitor<Void> {
     @Override
     public Void visitFuncDef(compUnitParser.FuncDefContext ctx) {
         if(ctx.FuncType().getText().equals("int")){
-            ans += "define dso_local";
+            ans += "define dso_local ";
         }
         if(ctx.Ident().getText().equals("main")){
             ans += "i32 @main";
