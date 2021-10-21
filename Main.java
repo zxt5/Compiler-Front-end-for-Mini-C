@@ -58,9 +58,12 @@ public class Main {
             } catch (IOException ex) {
                 ex.printStackTrace();
             }
+                        System.out.println(visitor.ans);
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+        
 
     }
 }
