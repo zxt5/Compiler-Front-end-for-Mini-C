@@ -18,9 +18,9 @@ public class Main {
             try {
                 reader = new InputStreamReader(new FileInputStream(file_in));
                 while ((c = reader.read()) != -1) {
-                    if ((char)c != '\r') {
+//                     if ((char)c != '\r') {
                         s += (char)c;
-                    }
+//                     }
                 }
                 reader.close();
             } catch (Exception e) {
