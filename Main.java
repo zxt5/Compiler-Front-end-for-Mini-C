@@ -26,6 +26,7 @@ public class Main {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            System.out.println(s);
             // 去除注释
             Pattern p1 = Pattern.compile("/\\*(.*?)\\*/", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
             Pattern p2 = Pattern.compile("/\\*.*", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
