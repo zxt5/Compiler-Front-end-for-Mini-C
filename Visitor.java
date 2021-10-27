@@ -47,7 +47,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
 
     @Override
     public Object visitCompUnit(compUnitParser.CompUnitContext ctx) {
-        return super.visitCompUnit(ctx);
+//         return super.visitCompUnit(ctx);
+                return visitFuncDef(ctx.funcDef());
+
     }
 
     @Override
