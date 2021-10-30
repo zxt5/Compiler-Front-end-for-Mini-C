@@ -29,15 +29,52 @@ class Constant {
     }
 }
 
+class Function {
+    String name;
+    String returnType; // int  void String ...
+    List<String> parameter_list = new ArrayList<>();
+
+    public Function(String name) {
+        this.name = name;
+    }
+    public Function(String name,String returnType) {
+        this.name = name;
+        this.returnType = returnType;
+    }
+    public Function(String name,String returnType,List<String> parameter_list) {
+        this.name = name;
+        this.returnType = returnType;
+        this.parameter_list = parameter_list;
+    }
+}
+
+class Register {
+    String name;
+    String type;
+
+    public Register(String name, String type) {
+        this.name = name;
+        this.type = type;
+    }
+
+    public Register(String name) {
+        this.name = name;
+    }
+}
 
 public class Visitor extends compUnitBaseVisitor<Object> {
     public String ans = "";
     int cnt = 0; // count register
     List<Identifier> Identifier_list = new ArrayList<>();
     List<Constant> Constant_list = new ArrayList<>();
+    List<Function> Function_list = new ArrayList<>();
+    List<Register> Register_list = new ArrayList<>();
 
     public String Allocate() {
-        return "%"+(++cnt);
+        String name = "%"+(++cnt);
+        Register reg = new Register(name,"i32");
+        Register_list.add(reg);
+        return name;
     }
 
     public String getOp(String s) {
@@ -50,8 +87,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     }
 
     public String getNumber(String num) {
+//        System.out.println(num);
         int val = 0;
-        if (num.charAt(0)=='0'){
+        if (num.charAt(0)=='0'&&num.length()>1){
             if(num.charAt(1)=='x'||num.charAt(1)=='X') {
                 num = num.toLowerCase();
                 for (int i = 2; i < num.length(); i++) {
@@ -77,11 +115,19 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     public boolean isDefined(String name) {
         int n = Identifier_list.size();
         int  m = Constant_list.size();
-        for(int i = 0; i < n ; i++) {
-            if(Identifier_list.get(i).name.equals(name)) return true;
+        for (Identifier identifier : Identifier_list) {
+            if (identifier.name.equals(name)) return true;
         }
-        for(int i=0 ; i<m ; i++) {
-            if(Constant_list.get(i).name.equals(name)) return true;
+        for (Constant constant : Constant_list) {
+            if (constant.name.equals(name)) return true;
+        }
+        return false;
+    }
+
+    public boolean Function_is_defined(String name) {
+        int n = Function_list.size();
+        for(int i=0 ; i<n ;i++) {
+            if(Function_list.get(i).name.equals(name) ) return true;
         }
         return false;
     }
@@ -216,6 +262,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 String reg = visitExp(ctx.exp());
                 ans += "ret i32 " + reg;
             }
+            else {
+                visitExp(ctx.exp());
+            }
         }
         else {
             String name = ctx.lVal().Ident().getText();
@@ -236,10 +285,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     public String visitLVal(compUnitParser.LValContext ctx) {
         String name = ctx.Ident().getText();
         if(!isDefined(name)) {
-//            for(int i=0;i<Identifier_list.size();i++) {
-//                System.out.println(Identifier_list.get(i).name);
-//            }
-//            System.out.println(name);
             System.exit(-2);
         }
         return getRegister(name);
@@ -293,17 +338,58 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         }
     }
 
+    @Override
     public String visitUnaryExp(compUnitParser.UnaryExpContext ctx) {
-        if( ctx.unaryExp()==null ) {
-            return visitPrimaryExp(ctx.primaryExp());
+        if(ctx.Ident()!=null) {
+            String name = ctx.Ident().getText();
+//            if(!Function_is_defined(name)) System.exit(-3); // 函数未定义，报错
+            if(name.equals("getint")) {
+                if(ctx.funcRParams() != null) System.exit(-4);
+                String reg = Allocate();
+                ans += reg + " = call i32 @getint()\n";
+                return reg;
+            }
+            else if(name.equals("putint")) {
+                if(ctx.funcRParams().exp().size() != 1) System.exit(-5);
+                String reg = visitExp(ctx.funcRParams().exp(0));
+                ans += "call void @putint(i32 " + reg +")\n";
+            }
+            else if(name.equals("getch")) {
+                if(ctx.funcRParams() != null) System.exit(-6);
+                String reg = Allocate();
+                ans += reg + " = call i32 @getch()\n";
+                return reg;
+            }
+            else if(name.equals("putch")) {
+                if(ctx.funcRParams().exp().size() != 1) System.exit(-7);
+                String reg = visitExp(ctx.funcRParams().exp(0));
+                ans += "call void @putch(i32 " + reg +")\n";
+            }
+            else {
+            }
         }
         else {
-            String l = "0";
-            String r = visitUnaryExp(ctx.unaryExp());
-            String reg = Allocate();
-            ans += reg + " = " + getOp(ctx.unaryOp().getText()) + l + " , " + r + "\n";
-            return reg;
+            if( ctx.unaryExp()==null ) {
+                return visitPrimaryExp(ctx.primaryExp());
+            }
+            else {
+                String l = "0";
+                String r = visitUnaryExp(ctx.unaryExp());
+                String reg = Allocate();
+                ans += reg + " = " + getOp(ctx.unaryOp().getText()) + l + " , " + r + "\n";
+                return reg;
+            }
         }
+        return null;
+    }
+
+    @Override
+    public String visitFuncRParams(compUnitParser.FuncRParamsContext ctx) {
+        int n = ctx.exp().size();
+        for(int i=0 ; i<n ;i++) {
+            visitExp(ctx.exp(i));
+        }
+        return null;
     }
 
 
