@@ -92,6 +92,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         return name;
     }
 
+    // 运算符转换成对应语法
     public String getOp(String s) {
         if( s.equals("+") ) return "add i32 ";
         if( s.equals("-") ) return "sub i32 ";
@@ -101,6 +102,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         return null;
     }
 
+    // 数制转换
     public String getNumber(String num) {
 //        System.out.println(num);
         int val = 0;
@@ -127,6 +129,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         }
     }
 
+    // 判断变量是否定义
     public boolean isDefined(String name) {
         for (Identifier identifier : Identifier_list) {
             if (identifier.name.equals(name)) return true;
@@ -137,6 +140,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         return false;
     }
 
+    // 判断是否是常量
     public boolean isConstant(String name) {
         for (Constant constant : Constant_list) {
             if (constant.name.equals(name)) return true;
@@ -144,6 +148,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         return false;
     }
 
+    // 判断函数是否定义
     public boolean Function_is_defined(String name) {
         for (Function function : Function_list) {
             if (function.name.equals(name)) return true;
@@ -151,6 +156,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         return false;
     }
 
+    // 获取变量的寄存器号
     public String getRegister(String name) {
         for (Identifier identifier : Identifier_list) {
             if (identifier.name.equals(name))
@@ -209,7 +215,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         int n = ctx.varDef().size();
         for(int i=0 ; i<n ; i++) {
             String name = ctx.varDef(i).getText();
-            if(isDefined(name)) System.exit(1);
+            if(isDefined(name)) System.exit(-1);
             visitVarDef(ctx.varDef(i));
         }
         return null;
@@ -242,7 +248,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         int n = ctx.constDef().size();
         for(int i=0 ; i<n ; i++) {
             String name = ctx.constDef(i).getText();
-            if(isDefined(name)) System.exit(2);
+            if(isDefined(name)) System.exit(-2);
             visitConstDef(ctx.constDef(i));
         }
         this.isConst = false;
@@ -285,9 +291,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         }
         else {
             String name = ctx.lVal().Ident().getText();
-            if(!isDefined(name)) System.exit(-1); // 如果变量未定义，报错
+            if(!isDefined(name)) System.exit(-3); // 如果变量未定义，报错
             System.out.println(name);
-            if(isConstant(name)) System.exit(-10);
+            if(isConstant(name)) System.exit(-4);
             String curReg = getRegister(name);
             String ret = visitExp(ctx.exp());
             ans += "store i32 " + ret + " , " + "i32* " + curReg + "\n";
@@ -300,6 +306,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         return visitAddExp(ctx.addExp());
     }
 
+    @Override
     public String visitAddExp(compUnitParser.AddExpContext ctx) {
         if(ctx.addExp()==null) {
             return visitMulExp(ctx.mulExp());
@@ -308,17 +315,12 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             String l = visitAddExp(ctx.addExp());
             String r = visitMulExp(ctx.mulExp());
             String reg = Allocate();
-            ans += reg;
-            ans += " = ";
-            ans += getOp(ctx.unaryOp().getText());
-            ans += l;
-            ans += " , ";
-            ans += r;
-            ans += "\n";
+            ans += reg + " = " + getOp(ctx.unaryOp().getText()) + l + " , " + r + "\n";
             return reg;
         }
     }
 
+    @Override
     public String visitMulExp(compUnitParser.MulExpContext ctx) {
         if( ctx.mulExp()==null ) {
             return visitUnaryExp(ctx.unaryExp());
@@ -332,31 +334,32 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         }
     }
 
+    @Override
     public String visitUnaryExp(compUnitParser.UnaryExpContext ctx) {
         if(ctx.Ident()!=null) {
             String name = ctx.Ident().getText();
-            if(!Function_is_defined(name)) System.exit(-3); // 函数未定义，报错
+            if(!Function_is_defined(name)) System.exit(-5); // 函数未定义，报错
             switch (name) {
                 case "getint": {
-                    if (ctx.funcRParams() != null) System.exit(-4);
+                    if (ctx.funcRParams() != null) System.exit(-6);
                     String reg = Allocate();
                     ans += reg + " = call i32 @getint()\n";
                     return reg;
                 }
                 case "putint": {
-                    if (ctx.funcRParams().exp().size() != 1) System.exit(-5);
+                    if (ctx.funcRParams().exp().size() != 1) System.exit(-7);
                     String reg = visitExp(ctx.funcRParams().exp(0));
                     ans += "call void @putint(i32 " + reg + ")\n";
                     break;
                 }
                 case "getch": {
-                    if (ctx.funcRParams() != null) System.exit(-6);
+                    if (ctx.funcRParams() != null) System.exit(-8);
                     String reg = Allocate();
                     ans += reg + " = call i32 @getch()\n";
                     return reg;
                 }
                 case "putch": {
-                    if (ctx.funcRParams().exp().size() != 1) System.exit(-7);
+                    if (ctx.funcRParams().exp().size() != 1) System.exit(-9);
                     String reg = visitExp(ctx.funcRParams().exp(0));
                     ans += "call void @putch(i32 " + reg + ")\n";
                     break;
@@ -389,13 +392,13 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         return null;
     }
 
+    @Override
     public String visitLVal(compUnitParser.LValContext ctx) {
         String name = ctx.Ident().getText();
         if(!isDefined(name)) {
-            System.exit(-2);
+            System.exit(-10);
         }
         if(!isConstant(name) && this.isConst) {
-//            System.out.println(name);
             System.exit(-11);
         }
         String reg = getRegister(name);
@@ -404,6 +407,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         return newReg;
     }
 
+    @Override
     public String visitPrimaryExp(compUnitParser.PrimaryExpContext ctx) {
         if(ctx.exp() == null) {
             if(ctx.lVal()==null) {
