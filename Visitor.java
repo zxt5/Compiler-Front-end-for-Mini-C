@@ -136,6 +136,13 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         return false;
     }
 
+    public boolean isConstant(String name) {
+        for (Constant constant : Constant_list) {
+            if (constant.name.equals(name)) return true;
+        }
+        return false;
+    }
+
     public boolean Function_is_defined(String name) {
         for (Function function : Function_list) {
             if (function.name.equals(name)) return true;
@@ -276,6 +283,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         else {
             String name = ctx.lVal().Ident().getText();
             if(!isDefined(name)) System.exit(-1); // 如果变量未定义，报错
+            if(isConstant(name)) System.exit(-10);
             String curReg = getRegister(name);
             String ret = visitExp(ctx.exp());
             ans += "store i32 " + ret + " , " + "i32* " + curReg + "\n";
@@ -386,6 +394,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         String name = ctx.Ident().getText();
         if(!isDefined(name)) {
             System.exit(-2);
+        }
+        if(isConstant(name)) {
+            System.exit(-10);
         }
         String reg = getRegister(name);
         String newReg = Allocate();
