@@ -65,11 +65,25 @@ class Register {
 public class Visitor extends compUnitBaseVisitor<Object> {
     public String ans = "";
     int cnt = 0; // count register
-    List<Identifier> Identifier_list = new ArrayList<>();
-    List<Constant> Constant_list = new ArrayList<>();
-    List<Function> Function_list = new ArrayList<>();
-    List<Register> Register_list = new ArrayList<>();
+    List<Identifier> Identifier_list = new ArrayList<>();  // 变量表
+    List<Constant> Constant_list = new ArrayList<>();      // 常量表
+    List<Function> Function_list = new ArrayList<>();      // 函数表
+    List<Register> Register_list = new ArrayList<>();      // 寄存器表
 
+    public void init() {
+        // 初始化函数表
+        Function_list.add(new Function("getint","i32"));
+        Function_list.add(new Function("getch","i32"));
+        Function_list.add(new Function("putint","void"));
+        Function_list.add(new Function("getch","void"));
+
+        ans += "declare i32 @getint()\n";
+        ans += "declare i32 @getch()\n";
+        ans += "declare void @putint(i32)";
+        ans += "declare void @putch(i32)\n";
+    }
+
+    // 分配寄存器
     public String Allocate() {
         String name = "%"+(++cnt);
         Register reg = new Register(name,"i32");
@@ -113,8 +127,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     }
 
     public boolean isDefined(String name) {
-        int n = Identifier_list.size();
-        int  m = Constant_list.size();
         for (Identifier identifier : Identifier_list) {
             if (identifier.name.equals(name)) return true;
         }
@@ -125,22 +137,19 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     }
 
     public boolean Function_is_defined(String name) {
-        int n = Function_list.size();
-        for(int i=0 ; i<n ;i++) {
-            if(Function_list.get(i).name.equals(name) ) return true;
+        for (Function function : Function_list) {
+            if (function.name.equals(name)) return true;
         }
         return false;
     }
 
     public String getRegister(String name) {
-        int n = Identifier_list.size();
-        int  m = Constant_list.size();
-        for(int i = 0; i < n ; i++) {
-            if(Identifier_list.get(i).name.equals(name))
-                return Identifier_list.get(i).register;
+        for (Identifier identifier : Identifier_list) {
+            if (identifier.name.equals(name))
+                return identifier.register;
         }
-        for(int i=0 ; i<m ; i++) {
-            if(Constant_list.get(i).name.equals(name)) return Constant_list.get(i).register;
+        for (Constant constant : Constant_list) {
+            if (constant.name.equals(name)) return constant.register;
         }
         return null;
     }
@@ -153,84 +162,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
 
     @Override
     public Void visitFuncDef(compUnitParser.FuncDefContext ctx) {
-        if(ctx.Type().getText().equals("int")){
-            ans += "define dso_local ";
-        }
-        if(ctx.IdentMain().getText().equals("main")){
-            ans += "i32 @main";
-        }
-        ans += "()";
+        ans += "define dso_local i32 @main()";
         visitBlock(ctx.block());
         return null;
-    }
-
-    @Override
-    public String visitDecl(compUnitParser.DeclContext ctx) {
-        if(ctx.constDecl()==null) return visitVarDecl(ctx.varDecl());
-        else return visitConstDecl(ctx.constDecl());
-    }
-
-
-    @Override
-    public String visitConstDecl(compUnitParser.ConstDeclContext ctx) {
-        int n = ctx.constDef().size();
-        for(int i=0 ; i<n ; i++) {
-            visitConstDef(ctx.constDef(i));
-        }
-        return null;
-    }
-
-    @Override
-    public String visitConstDef(compUnitParser.ConstDefContext ctx) {
-        String reg = Allocate();
-        ans += reg + " = alloca i32\n";
-        String name = ctx.Ident().getText();
-        // 加入常量池
-        Constant constant = new Constant(name,reg);
-        Constant_list.add(constant);
-        String ret = visitConstInitVal(ctx.constInitVal());
-        ans += "store i32 " + ret + " , " + "i32* " + reg + "\n" ;
-        return null;
-    }
-
-    @Override
-    public String visitVarDecl(compUnitParser.VarDeclContext ctx) {
-        int n = ctx.varDef().size();
-        for(int i=0 ; i<n ; i++) {
-            visitVarDef(ctx.varDef(i));
-        }
-        return null;
-    }
-
-    @Override
-    public String visitVarDef(compUnitParser.VarDefContext ctx) {
-        String reg = Allocate();
-        ans += reg + " = alloca i32\n";
-        String name = ctx.Ident().getText();
-        // 加入变量池
-        Identifier identifier = new Identifier(name,reg);
-        Identifier_list.add(identifier);
-
-        if(ctx.initVal()!=null) {
-            String ret = visitInitVal(ctx.initVal());
-            ans += "store i32 " + ret + " , " + "i32* " + reg + "\n" ;
-        }
-        return null;
-    }
-
-    @Override
-    public String visitConstInitVal(compUnitParser.ConstInitValContext ctx) {
-        return visitConstExp(ctx.constExp());
-    }
-
-    @Override
-    public String visitConstExp(compUnitParser.ConstExpContext ctx) {
-        return visitAddExp(ctx.addExp());
-    }
-
-    @Override
-    public String visitInitVal(compUnitParser.InitValContext ctx) {
-        return visitExp(ctx.exp());
     }
 
     @Override
@@ -256,11 +190,84 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     }
 
     @Override
+    public String visitDecl(compUnitParser.DeclContext ctx) {
+        if(ctx.constDecl()==null)  visitVarDecl(ctx.varDecl());
+        else visitConstDecl(ctx.constDecl());
+        return null;
+    }
+
+    @Override
+    public String visitVarDecl(compUnitParser.VarDeclContext ctx) {
+        int n = ctx.varDef().size();
+        for(int i=0 ; i<n ; i++) {
+            String name = ctx.varDef(i).getText();
+            if(isDefined(name)) System.exit(1);
+            visitVarDef(ctx.varDef(i));
+        }
+        return null;
+    }
+
+    @Override
+    public String visitVarDef(compUnitParser.VarDefContext ctx) {
+        String reg = Allocate();
+        ans += reg + " = alloca i32\n";
+        String name = ctx.Ident().getText();
+        // 加入变量池
+        Identifier identifier = new Identifier(name,reg);
+        Identifier_list.add(identifier);
+
+        if(ctx.initVal()!=null) {
+            String ret = visitInitVal(ctx.initVal());
+            ans += "store i32 " + ret + " , " + "i32* " + reg + "\n" ;
+        }
+        return null;
+    }
+
+    @Override
+    public String visitInitVal(compUnitParser.InitValContext ctx) {
+        return visitExp(ctx.exp());
+    }
+
+    @Override
+    public String visitConstDecl(compUnitParser.ConstDeclContext ctx) {
+        int n = ctx.constDef().size();
+        for(int i=0 ; i<n ; i++) {
+            String name = ctx.constDef(i).getText();
+            if(isDefined(name)) System.exit(2);
+            visitConstDef(ctx.constDef(i));
+        }
+        return null;
+    }
+
+    @Override
+    public String visitConstDef(compUnitParser.ConstDefContext ctx) {
+        String reg = Allocate();
+        ans += reg + " = alloca i32\n";
+        String name = ctx.Ident().getText();
+        // 加入常量池
+        Constant constant = new Constant(name,reg);
+        Constant_list.add(constant);
+        String ret = visitConstInitVal(ctx.constInitVal());
+        ans += "store i32 " + ret + " , " + "i32* " + reg + "\n" ;
+        return null;
+    }
+
+    @Override
+    public String visitConstInitVal(compUnitParser.ConstInitValContext ctx) {
+        return visitConstExp(ctx.constExp());
+    }
+
+    @Override
+    public String visitConstExp(compUnitParser.ConstExpContext ctx) {
+        return visitAddExp(ctx.addExp());
+    }
+
+    @Override
     public String visitStmt(compUnitParser.StmtContext ctx) {
         if(ctx.lVal() == null) {
             if(ctx.Return() !=null) {
                 String reg = visitExp(ctx.exp());
-                ans += "ret i32 " + reg;
+                ans += "ret i32 " + reg + "\n";
             }
             else {
                 visitExp(ctx.exp());
@@ -279,29 +286,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     @Override
     public String visitExp(compUnitParser.ExpContext ctx) {
         return visitAddExp(ctx.addExp());
-    }
-
-    @Override
-    public String visitLVal(compUnitParser.LValContext ctx) {
-        String name = ctx.Ident().getText();
-        if(!isDefined(name)) {
-            System.exit(-2);
-        }
-        return getRegister(name);
-    }
-
-    @Override
-    public String visitPrimaryExp(compUnitParser.PrimaryExpContext ctx) {
-        if(ctx.exp() == null) {
-            if(ctx.lVal()==null) {
-                return getNumber(ctx.Number().getText());
-            }
-            else {
-                return visitLVal(ctx.lVal());
-            }
-        }
-        else
-            return visitExp(ctx.exp());
     }
 
     @Override
@@ -342,30 +326,34 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     public String visitUnaryExp(compUnitParser.UnaryExpContext ctx) {
         if(ctx.Ident()!=null) {
             String name = ctx.Ident().getText();
-//            if(!Function_is_defined(name)) System.exit(-3); // 函数未定义，报错
-            if(name.equals("getint")) {
-                if(ctx.funcRParams() != null) System.exit(-4);
-                String reg = Allocate();
-                ans += reg + " = call i32 @getint()\n";
-                return reg;
-            }
-            else if(name.equals("putint")) {
-                if(ctx.funcRParams().exp().size() != 1) System.exit(-5);
-                String reg = visitExp(ctx.funcRParams().exp(0));
-                ans += "call void @putint(i32 " + reg +")\n";
-            }
-            else if(name.equals("getch")) {
-                if(ctx.funcRParams() != null) System.exit(-6);
-                String reg = Allocate();
-                ans += reg + " = call i32 @getch()\n";
-                return reg;
-            }
-            else if(name.equals("putch")) {
-                if(ctx.funcRParams().exp().size() != 1) System.exit(-7);
-                String reg = visitExp(ctx.funcRParams().exp(0));
-                ans += "call void @putch(i32 " + reg +")\n";
-            }
-            else {
+            if(!Function_is_defined(name)) System.exit(-3); // 函数未定义，报错
+            switch (name) {
+                case "getint": {
+                    if (ctx.funcRParams() != null) System.exit(-4);
+                    String reg = Allocate();
+                    ans += reg + " = call i32 @getint()\n";
+                    return reg;
+                }
+                case "putint": {
+                    if (ctx.funcRParams().exp().size() != 1) System.exit(-5);
+                    String reg = visitExp(ctx.funcRParams().exp(0));
+                    ans += "call void @putint(i32 " + reg + ")\n";
+                    break;
+                }
+                case "getch": {
+                    if (ctx.funcRParams() != null) System.exit(-6);
+                    String reg = Allocate();
+                    ans += reg + " = call i32 @getch()\n";
+                    return reg;
+                }
+                case "putch": {
+                    if (ctx.funcRParams().exp().size() != 1) System.exit(-7);
+                    String reg = visitExp(ctx.funcRParams().exp(0));
+                    ans += "call void @putch(i32 " + reg + ")\n";
+                    break;
+                }
+                default:
+                    break;
             }
         }
         else {
@@ -391,6 +379,40 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         }
         return null;
     }
+
+
+    @Override
+    public String visitLVal(compUnitParser.LValContext ctx) {
+        String name = ctx.Ident().getText();
+        if(!isDefined(name)) {
+            System.exit(-2);
+        }
+        String reg = getRegister(name);
+        String newReg = Allocate();
+        ans += newReg + " = load i32, i32* " + reg + "\n";
+        return newReg;
+    }
+
+    @Override
+    public String visitPrimaryExp(compUnitParser.PrimaryExpContext ctx) {
+        if(ctx.exp() == null) {
+            if(ctx.lVal()==null) {
+                return getNumber(ctx.Number().getText());
+            }
+            else {
+                return visitLVal(ctx.lVal());
+            }
+        }
+        else
+            return visitExp(ctx.exp());
+    }
+
+
+
+
+
+
+
 
 
 
