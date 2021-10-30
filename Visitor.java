@@ -65,6 +65,7 @@ class Register {
 public class Visitor extends compUnitBaseVisitor<Object> {
     public String ans = "";
     int cnt = 0; // count register
+    public boolean isConst = false;
     List<Identifier> Identifier_list = new ArrayList<>();  // 变量表
     List<Constant> Constant_list = new ArrayList<>();      // 常量表
     List<Function> Function_list = new ArrayList<>();      // 函数表
@@ -237,12 +238,14 @@ public class Visitor extends compUnitBaseVisitor<Object> {
 
     @Override
     public String visitConstDecl(compUnitParser.ConstDeclContext ctx) {
+        this.isConst = true;
         int n = ctx.constDef().size();
         for(int i=0 ; i<n ; i++) {
             String name = ctx.constDef(i).getText();
             if(isDefined(name)) System.exit(2);
             visitConstDef(ctx.constDef(i));
         }
+        this.isConst = false;
         return null;
     }
 
@@ -266,7 +269,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
 
     @Override
     public String visitConstExp(compUnitParser.ConstExpContext ctx) {
-        return visitAddExp(ctx.addExp(),true);
+        return visitAddExp(ctx.addExp());
     }
 
     @Override
@@ -294,16 +297,16 @@ public class Visitor extends compUnitBaseVisitor<Object> {
 
     @Override
     public String visitExp(compUnitParser.ExpContext ctx) {
-        return visitAddExp(ctx.addExp(),false);
+        return visitAddExp(ctx.addExp());
     }
 
-    public String visitAddExp(compUnitParser.AddExpContext ctx,boolean isConst) {
+    public String visitAddExp(compUnitParser.AddExpContext ctx) {
         if(ctx.addExp()==null) {
-            return visitMulExp(ctx.mulExp(),isConst);
+            return visitMulExp(ctx.mulExp());
         }
         else {
-            String l = visitAddExp(ctx.addExp(),isConst);
-            String r = visitMulExp(ctx.mulExp(),isConst);
+            String l = visitAddExp(ctx.addExp());
+            String r = visitMulExp(ctx.mulExp());
             String reg = Allocate();
             ans += reg;
             ans += " = ";
@@ -316,20 +319,20 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         }
     }
 
-    public String visitMulExp(compUnitParser.MulExpContext ctx,boolean isConst) {
+    public String visitMulExp(compUnitParser.MulExpContext ctx) {
         if( ctx.mulExp()==null ) {
-            return visitUnaryExp(ctx.unaryExp(),isConst);
+            return visitUnaryExp(ctx.unaryExp());
         }
         else {
-            String l = visitMulExp(ctx.mulExp(),isConst);
-            String r = visitUnaryExp(ctx.unaryExp(),isConst);
+            String l = visitMulExp(ctx.mulExp());
+            String r = visitUnaryExp(ctx.unaryExp());
             String reg = Allocate();
             ans += reg + " = " + getOp(ctx.calOp().getText()) + l + " , " + r + "\n";
             return reg;
         }
     }
 
-    public String visitUnaryExp(compUnitParser.UnaryExpContext ctx,boolean isConst) {
+    public String visitUnaryExp(compUnitParser.UnaryExpContext ctx) {
         if(ctx.Ident()!=null) {
             String name = ctx.Ident().getText();
             if(!Function_is_defined(name)) System.exit(-3); // 函数未定义，报错
@@ -364,11 +367,11 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         }
         else {
             if( ctx.unaryExp()==null ) {
-                return visitPrimaryExp(ctx.primaryExp(),isConst);
+                return visitPrimaryExp(ctx.primaryExp());
             }
             else {
                 String l = "0";
-                String r = visitUnaryExp(ctx.unaryExp(),isConst);
+                String r = visitUnaryExp(ctx.unaryExp());
                 String reg = Allocate();
                 ans += reg + " = " + getOp(ctx.unaryOp().getText()) + l + " , " + r + "\n";
                 return reg;
@@ -386,12 +389,12 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         return null;
     }
 
-    public String visitLVal(compUnitParser.LValContext ctx,boolean isConst) {
+    public String visitLVal(compUnitParser.LValContext ctx) {
         String name = ctx.Ident().getText();
         if(!isDefined(name)) {
             System.exit(-2);
         }
-        if(!isConstant(name) && isConst) {
+        if(!isConstant(name) && this.isConst) {
 //            System.out.println(name);
             System.exit(-11);
         }
@@ -401,13 +404,13 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         return newReg;
     }
 
-    public String visitPrimaryExp(compUnitParser.PrimaryExpContext ctx,boolean isConst) {
+    public String visitPrimaryExp(compUnitParser.PrimaryExpContext ctx) {
         if(ctx.exp() == null) {
             if(ctx.lVal()==null) {
                 return getNumber(ctx.Number().getText());
             }
             else {
-                return visitLVal(ctx.lVal(),isConst);
+                return visitLVal(ctx.lVal());
             }
         }
         else
