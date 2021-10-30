@@ -395,9 +395,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         if(!isDefined(name)) {
             System.exit(-2);
         }
-        if(isConstant(name)) {
-            System.exit(-10);
-        }
+//         if(isConstant(name)) {
+//             System.exit(-10);
+//         }
         String reg = getRegister(name);
         String newReg = Allocate();
         ans += newReg + " = load i32, i32* " + reg + "\n";
