@@ -5,6 +5,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -52,6 +53,13 @@ public class Main {
             ParseTree tree = parser.compUnit();  // 根节点
 
             Visitor visitor = new Visitor();
+
+            // 初始化函数表
+            visitor.Function_list.add(new Function("getint","i32"));
+            visitor.Function_list.add(new Function("getch","i32"));
+            visitor.Function_list.add(new Function("putint","void"));
+            visitor.Function_list.add(new Function("getch","void"));
+
             visitor.visit(tree);
 
 //            System.out.println(tree.toStringTree(parser));
