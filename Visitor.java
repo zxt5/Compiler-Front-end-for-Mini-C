@@ -75,7 +75,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         Function_list.add(new Function("getint","i32"));
         Function_list.add(new Function("getch","i32"));
         Function_list.add(new Function("putint","void"));
-        Function_list.add(new Function("getch","void"));
+        Function_list.add(new Function("putch","void"));
 
         ans += "declare i32 @getint()\n";
         ans += "declare i32 @getch()\n";
