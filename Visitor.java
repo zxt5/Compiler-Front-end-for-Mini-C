@@ -575,12 +575,15 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         return newReg;
     }
 
+    // primaryExp   : '(' exp ')' | lVal | Number ;
     @Override
     public Register visitPrimaryExp(compUnitParser.PrimaryExpContext ctx) {
         if(ctx.exp() == null) {
-            if(ctx.lVal()==null) {
+            if(ctx.lVal()==null) {  // Number
                 Register reg = Allocate("i32");
-                ans += reg.name + " = load i32, i32 " + getNumber(ctx.Number().getText()) + "\n";
+                ans += reg + " = alloca i32\n";
+//                ans += reg.name + " = load i32, i32 " + getNumber(ctx.Number().getText()) + "\n";
+                ans += "store i32 " + getNumber(ctx.Number().getText()) + " , " + "i32* " + reg.name;
                 return reg;
             }
             else {
