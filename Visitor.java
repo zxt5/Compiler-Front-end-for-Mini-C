@@ -316,7 +316,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             ans += "store i32 " + ret.name + " , " + "i32* " + curReg + "\n";
         }
         else if(ctx.Return() != null) {      // 'return' Exp ';'
-            Allocate("i32");
+//             Allocate("i32");
             Register reg = visitExp(ctx.exp());
             ans += "ret " + reg.type + " "+ reg.name + "\n";
             return null;
