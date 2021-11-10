@@ -584,7 +584,10 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 ans += reg.name + " = alloca i32\n";
 //                ans += reg.name + " = load i32, i32 " + getNumber(ctx.Number().getText()) + "\n";
                 ans += "store i32 " + getNumber(ctx.Number().getText()) + " , " + "i32* " + reg.name + "\n";
-                return reg;
+                Register temp = Allocate("i32");
+                ans += temp.name + " = load i32, i32* " + reg.name + "\n";
+                return temp;
+//                 return reg;
             }
             else {
                 return visitLVal(ctx.lVal());
