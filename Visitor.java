@@ -320,10 +320,11 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             if(is_return_in_if) Allocate("i32");
             Register reg = visitExp(ctx.exp());
             ans += "ret " + reg.type + " "+ reg.name + "\n";
+            Allocate("i32");
             return null;
         }
         else if(ctx.condition() != null) {    // 'if' '(' Cond ')' Stmt [ 'else' Stmt ]
-            is_return_in_if = true;
+//            is_return_in_if = true;
             int stmt_len = ctx.stmt().size();
             Register reg_cond = visitCondition(ctx.condition());
             if(reg_cond.type.equals("i32")) {
@@ -340,7 +341,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 visitStmt(ctx.stmt().get(0));
                 ans += "br label %" + block_next + "\n";
                 ans += block_next + ":\n";
-                is_return_in_if = false;
+//                is_return_in_if = false;
             }
             else {   // if ... else ...
                 String block_stmt = newBlock();
@@ -354,8 +355,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 visitStmt(ctx.stmt().get(1));
                 ans += "br label %" + block_next + "\n";
                 ans += block_next + ":\n";
-                is_return_in_if = false;
+//                is_return_in_if = false;
             }
+//                is_return_in_if = false;
         }
         else if(ctx.block() != null) {         // Block
             visitBlock(ctx.block());
