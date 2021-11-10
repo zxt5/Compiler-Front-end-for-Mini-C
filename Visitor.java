@@ -580,7 +580,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         if(ctx.exp() == null) {
             if(ctx.lVal()==null) {
                 Register reg = Allocate("i32");
-                ans += reg.name + " = load i32, i32* " + getNumber(ctx.Number().getText()) + "\n";
+                ans += reg.name + " = load i32, i32 " + getNumber(ctx.Number().getText()) + "\n";
                 return reg;
             }
             else {
