@@ -340,6 +340,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 visitStmt(ctx.stmt().get(0));
                 ans += "br label %" + block_next + "\n";
                 ans += block_next + ":\n";
+                is_return_in_if = false;
             }
             else {   // if ... else ...
                 String block_stmt = newBlock();
@@ -353,8 +354,8 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 visitStmt(ctx.stmt().get(1));
                 ans += "br label %" + block_next + "\n";
                 ans += block_next + ":\n";
+                is_return_in_if = false;
             }
-            is_return_in_if = false;
         }
         else if(ctx.block() != null) {         // Block
             visitBlock(ctx.block());
