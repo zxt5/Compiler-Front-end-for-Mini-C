@@ -69,6 +69,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     int cnt = 0; // count register
     int cnt_block = 0;
     public boolean isConst = false;
+    public boolean is_return_in_if = false;
     List<Identifier> Identifier_list = new ArrayList<>();  // 变量表
     List<Constant> Constant_list = new ArrayList<>();      // 常量表
     List<Function> Function_list = new ArrayList<>();      // 函数表
@@ -316,12 +317,13 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             ans += "store i32 " + ret.name + " , " + "i32* " + curReg + "\n";
         }
         else if(ctx.Return() != null) {      // 'return' Exp ';'
-//             Allocate("i32");
+            if(is_return_in_if) Allocate("i32");
             Register reg = visitExp(ctx.exp());
             ans += "ret " + reg.type + " "+ reg.name + "\n";
             return null;
         }
         else if(ctx.condition() != null) {    // 'if' '(' Cond ')' Stmt [ 'else' Stmt ]
+            is_return_in_if = true;
             int stmt_len = ctx.stmt().size();
             Register reg_cond = visitCondition(ctx.condition());
             if(reg_cond.type.equals("i32")) {
@@ -352,6 +354,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 ans += "br label %" + block_next + "\n";
                 ans += block_next + ":\n";
             }
+            is_return_in_if = false;
         }
         else if(ctx.block() != null) {         // Block
             visitBlock(ctx.block());
@@ -587,7 +590,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 Register temp = Allocate("i32");
                 ans += temp.name + " = load i32, i32* " + reg.name + "\n";
                 return temp;
-//                 return reg;
             }
             else {
                 return visitLVal(ctx.lVal());
