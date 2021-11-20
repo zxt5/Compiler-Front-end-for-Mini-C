@@ -897,13 +897,14 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         else {  // 变量
             if(ctx.exp() == null) {
                 if(ctx.lVal()==null) {  // Number
-                    Register reg = Allocate("i32");
-                    ans += reg.name + " = alloca i32\n";
-//                ans += reg.name + " = load i32, i32 " + getNumber(ctx.Number().getText()) + "\n";
-                    ans += "store i32 " + getNumber(ctx.Number().getText()) + " , " + "i32* " + reg.name + "\n";
-                    Register temp = Allocate("i32");
-                    ans += temp.name + " = load i32, i32* " + reg.name + "\n";
-                    return temp;
+//                    Register reg = Allocate("i32");
+//                    ans += reg.name + " = alloca i32\n";
+//                    ans += "store i32 " + getNumber(ctx.Number().getText()) + " , " + "i32* " + reg.name + "\n";
+//                    Register temp = Allocate("i32");
+//                    ans += temp.name + " = load i32, i32* " + reg.name + "\n";
+//                    return temp;
+                    int number = Integer.parseInt( getNumber(ctx.Number().getText()) );
+                    return number;
                 }
                 else {
                     return visitLVal(ctx.lVal());
