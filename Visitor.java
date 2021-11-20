@@ -94,7 +94,8 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     public boolean isGlobal = false;
     public String cur_while_head;
     public String cur_while_end;
-//    List<Identifier> Identifier_list = new ArrayList<>();  // 变量表
+    boolean is_break_or_continue = false;
+    //    List<Identifier> Identifier_list = new ArrayList<>();  // 变量表
 //    List<Constant> Constant_list = new ArrayList<>();      // 常量表
 //    Identifier_list cur_identifier_list = null;
     List<Identifier> cur_identifier_list = null;
@@ -477,12 +478,14 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     String block_next = newBlock();
                     ans += "br i1 " + reg_cond1.name + " , label %" + block_stmt + " , label %" + block_next + "\n";
                     ans += "\n" + block_stmt + ":\n";
+                    is_break_or_continue = false;
                     Object ret = visitStmt(ctx.stmt().get(0));
-                    if(ret == null) {
-                        ans += "br label %" + block_next + "\n\n";
-                    }
-                    else return null;
 
+                    if(!is_break_or_continue) {   // !!!!!!
+                        ans += "br label %" + block_next + "\n";
+                    }
+//                    else return null;
+                    is_break_or_continue = false;
                     ans += "\n" + block_next + ":\n";
                 }
                 else {   // if ... else ...
@@ -494,10 +497,12 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     visitStmt(ctx.stmt().get(0));
                     ans += "br label %" + block_next + "\n";
                     ans += "\n" + block_else + ":\n";
+                    is_break_or_continue = false;
                     Object ret = visitStmt(ctx.stmt().get(1));
-                    if(ret == null)
+                    if(!is_break_or_continue)
                         ans += "br label %" + block_next + "\n";
-                    else return null;
+//                    else return null;
+                    is_break_or_continue = false;
                     ans += "\n" + block_next + ":\n";
                 }
             }
@@ -526,10 +531,12 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             }
         }
         else if(ctx.Continue() != null) {      // Continue
+            is_break_or_continue = true;
             ans += "br label %" + cur_while_head + "\n";
             return 1;
         }
         else if(ctx.Break() != null) {        // break
+            is_break_or_continue = true;
             ans += "br label %" + cur_while_end + "\n";
             return 1;
         }
