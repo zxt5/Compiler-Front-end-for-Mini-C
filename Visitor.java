@@ -478,7 +478,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     ans += "br i1 " + reg_cond1.name + " , label %" + block_stmt + " , label %" + block_next + "\n";
                     ans += "\n" + block_stmt + ":\n";
                     Object ret = visitStmt(ctx.stmt().get(0));
-                    if(ret != null) {
+                    if(ret == null) {
                         ans += "br label %" + block_next + "\n\n";
                     }
                     else return null;
@@ -495,7 +495,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     ans += "br label %" + block_next + "\n";
                     ans += "\n" + block_else + ":\n";
                     Object ret = visitStmt(ctx.stmt().get(1));
-                    if(ret != null)
+                    if(ret == null)
                         ans += "br label %" + block_next + "\n";
                     else return null;
                     ans += "\n" + block_next + ":\n";
