@@ -493,12 +493,14 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     String block_else = newBlock();
                     String block_next = newBlock();
                     ans += "br i1 " + reg_cond1.name + " , label %" + block_stmt + " , label %" + block_else + "\n";
-                    ans += block_stmt + ":\n";
-                    visitStmt(ctx.stmt().get(0));
-                    ans += "br label %" + block_next + "\n";
-                    ans += "\n" + block_else + ":\n";
+                    ans += "\n" + block_stmt + ":\n";
                     is_break_or_continue = false;
-                    Object ret = visitStmt(ctx.stmt().get(1));
+                    visitStmt(ctx.stmt().get(0));
+                    if(!is_break_or_continue)
+                        ans += "br label %" + block_next + "\n";
+                    is_break_or_continue = false;
+                    ans += "\n" + block_else + ":\n";
+                    visitStmt(ctx.stmt().get(1));
                     if(!is_break_or_continue)
                         ans += "br label %" + block_next + "\n";
 //                    else return null;
