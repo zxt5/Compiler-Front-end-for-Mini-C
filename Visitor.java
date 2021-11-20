@@ -701,12 +701,25 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 Object l = visitAddExp(ctx.addExp());
                 Object r = visitMulExp(ctx.mulExp());
                 Register reg = Allocate("i32");
-                if(l instanceof Register && r instanceof Register) {
-                    Register l1 = (Register) l;
-                    Register r1 = (Register) r;
-                    ans += reg.name + " = " + getOp(ctx.unaryOp().getText()) + l1.name + " , " + r1.name + "\n";
-                    return reg;
-                }
+                String L , R;
+                if( l instanceof Register)
+                    L = ((Register) l).name;
+                else
+                    L = ((Integer) l).toString();
+
+                if( r instanceof Register)
+                    R = ((Register) r).name;
+                else
+                    R = ((Integer) r).toString();
+
+                ans += reg.name + " = " + getOp(ctx.unaryOp().getText()) + L + " , " + R + "\n";
+                return reg;
+//                if(l instanceof Register && r instanceof Register) {
+//                    Register l1 = (Register) l;
+//                    Register r1 = (Register) r;
+//                    ans += reg.name + " = " + getOp(ctx.unaryOp().getText()) + l1.name + " , " + r1.name + "\n";
+//                    return reg;
+//                }
             }
         }
         return null;
