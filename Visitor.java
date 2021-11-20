@@ -522,7 +522,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 ans += "\n" + while_begin + ":\n";
                 visitStmt(ctx.stmt().get(0));
                 ans += "br label %" + while_head + "\n";
-                ans += "\n" + while_head + ":\n";
+                ans += "\n" + while_end + ":\n";
             }
         }
         else if(ctx.Continue() != null) {      // Continue
