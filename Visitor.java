@@ -714,12 +714,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
 
                 ans += reg.name + " = " + getOp(ctx.unaryOp().getText()) + L + " , " + R + "\n";
                 return reg;
-//                if(l instanceof Register && r instanceof Register) {
-//                    Register l1 = (Register) l;
-//                    Register r1 = (Register) r;
-//                    ans += reg.name + " = " + getOp(ctx.unaryOp().getText()) + l1.name + " , " + r1.name + "\n";
-//                    return reg;
-//                }
             }
         }
         return null;
@@ -739,7 +733,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     Integer R = (Integer) r;
                     String Op = ctx.calOp().getText();
                     int ret = Calculate( L , R , Op);
-//                    System.out.println(ret);
                     return ret;
                 }
             }
@@ -752,12 +745,18 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 Object l = visitMulExp(ctx.mulExp());
                 Object r = visitUnaryExp(ctx.unaryExp());
                 Register reg = Allocate("i32");
-                if(l instanceof Register && r instanceof Register) {
-                    Register L = (Register) l;
-                    Register R = (Register) r;
-                    ans += reg.name + " = " + getOp(ctx.calOp().getText()) + L.name + " , " + R.name + "\n";
-                    return reg;
-                }
+                String L , R;
+                if( l instanceof Register)
+                    L = ((Register) l).name;
+                else
+                    L = ((Integer) l).toString();
+
+                if( r instanceof Register)
+                    R = ((Register) r).name;
+                else
+                    R = ((Integer) r).toString();
+
+                ans += reg.name + " = " + getOp(ctx.calOp().getText()) + L + " , " + R + "\n";
             }
         }
         return null;
@@ -905,7 +904,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 if(ctx.lVal()==null) {  // Number
                     Register reg = Allocate("i32");
                     ans += reg.name + " = alloca i32\n";
-//                ans += reg.name + " = load i32, i32 " + getNumber(ctx.Number().getText()) + "\n";
                     ans += "store i32 " + getNumber(ctx.Number().getText()) + " , " + "i32* " + reg.name + "\n";
                     Register temp = Allocate("i32");
                     ans += temp.name + " = load i32, i32* " + reg.name + "\n";
