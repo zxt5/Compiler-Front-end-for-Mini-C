@@ -451,46 +451,53 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         else if(ctx.If() != null) {    // 'if' '(' Cond ')' Stmt [ 'else' Stmt ]
             int stmt_len = ctx.stmt().size();
             Object reg_cond = visitCondition(ctx.condition());
-            if(reg_cond instanceof Register) {
+            String COND;
+            if(reg_cond instanceof Integer) {
+                Register cond = Allocate("i1");
+                ans += cond.name + " = icmp ne i32 " +  ((Integer)reg_cond).toString() + " , " +  "0" + "\n";
+                COND = cond.name;
+            }
+            else {
                 Register reg_cond1 = (Register) reg_cond;
-                if(reg_cond1.type.equals("i32")) {
+                if (reg_cond1.type.equals("i32")) {
                     Register cur_reg = Allocate("i1");
                     ans += cur_reg.name + " = trunc i32 " + reg_cond1.name + " to i1\n";
-                    reg_cond1 = cur_reg;
+                    COND = cur_reg.name;
                 }
-                if(stmt_len == 1) {  // 只有if没有else
-                    String block_stmt = newBlock();
-                    String block_next = newBlock();
-                    ans += "br i1 " + reg_cond1.name + " , label %" + block_stmt + " , label %" + block_next + "\n";
-                    ans += "\n" + block_stmt + ":\n";
-                    is_break_or_continue = false;
+                else COND = reg_cond1.name;
+            }
+            if(stmt_len == 1) {  // 只有if没有else
+                String block_stmt = newBlock();
+                String block_next = newBlock();
+                ans += "br i1 " + COND + " , label %" + block_stmt + " , label %" + block_next + "\n";
+                ans += "\n" + block_stmt + ":\n";
+                is_break_or_continue = false;
 
-                    visitStmt(ctx.stmt().get(0));
+                visitStmt(ctx.stmt().get(0));
 
-                    if(!is_break_or_continue) {
-                        ans += "br label %" + block_next + "\n";
-                    }
-                    is_break_or_continue = false;
-                    ans += "\n" + block_next + ":\n";
+                if(!is_break_or_continue) {
+                    ans += "br label %" + block_next + "\n";
                 }
-                else {   // if ... else ...
-                    String block_stmt = newBlock();
-                    String block_else = newBlock();
-                    String block_next = newBlock();
-                    ans += "br i1 " + reg_cond1.name + " , label %" + block_stmt + " , label %" + block_else + "\n";
-                    ans += "\n" + block_stmt + ":\n";
-                    is_break_or_continue = false;
-                    visitStmt(ctx.stmt().get(0));
-                    if(!is_break_or_continue)
-                        ans += "br label %" + block_next + "\n";
-                    is_break_or_continue = false;
-                    ans += "\n" + block_else + ":\n";
-                    visitStmt(ctx.stmt().get(1));
-                    if(!is_break_or_continue)
-                        ans += "br label %" + block_next + "\n";
-                    is_break_or_continue = false;
-                    ans += "\n" + block_next + ":\n";
-                }
+                is_break_or_continue = false;
+                ans += "\n" + block_next + ":\n";
+            }
+            else {   // if ... else ...
+                String block_stmt = newBlock();
+                String block_else = newBlock();
+                String block_next = newBlock();
+                ans += "br i1 " + COND + " , label %" + block_stmt + " , label %" + block_else + "\n";
+                ans += "\n" + block_stmt + ":\n";
+                is_break_or_continue = false;
+                visitStmt(ctx.stmt().get(0));
+                if(!is_break_or_continue)
+                    ans += "br label %" + block_next + "\n";
+                is_break_or_continue = false;
+                ans += "\n" + block_else + ":\n";
+                visitStmt(ctx.stmt().get(1));
+                if(!is_break_or_continue)
+                    ans += "br label %" + block_next + "\n";
+                is_break_or_continue = false;
+                ans += "\n" + block_next + ":\n";
             }
         }
         else if(ctx.While()!=null) {  // While '(' condition ')' stmt
@@ -499,22 +506,29 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             ans += "\n" + while_head + ":\n";
             cur_while_head = while_head;
             Object reg_cond = visitCondition(ctx.condition());
-            if(reg_cond instanceof Register) {
+            String COND;
+            if(reg_cond instanceof Integer) {
+                Register cond = Allocate("i1");
+                ans += cond.name + " = icmp ne i32 " +  ((Integer)reg_cond).toString() + " , " +  "0" + "\n";
+                COND = cond.name;
+            }
+            else {
                 Register reg_cond1 = (Register) reg_cond;
                 if (reg_cond1.type.equals("i32")) {
                     Register cur_reg = Allocate("i1");
                     ans += cur_reg.name + " = trunc i32 " + reg_cond1.name + " to i1\n";
-                    reg_cond1 = cur_reg;
+                    COND = cur_reg.name;
                 }
-                String while_begin = newBlock();
-                String while_end = newBlock();
-                cur_while_end = while_end;
-                ans += "br i1 " + reg_cond1.name + " , label %" + while_begin + " , label %" + while_end + "\n";
-                ans += "\n" + while_begin + ":\n";
-                visitStmt(ctx.stmt().get(0));
-                ans += "br label %" + while_head + "\n";
-                ans += "\n" + while_end + ":\n";
+                else COND = reg_cond1.name;
             }
+            String while_begin = newBlock();
+            String while_end = newBlock();
+            cur_while_end = while_end;
+            ans += "br i1 " + COND + " , label %" + while_begin + " , label %" + while_end + "\n";
+            ans += "\n" + while_begin + ":\n";
+            visitStmt(ctx.stmt().get(0));
+            ans += "br label %" + while_head + "\n";
+            ans += "\n" + while_end + ":\n";
         }
         else if(ctx.Continue() != null) {      // Continue
             is_break_or_continue = true;
