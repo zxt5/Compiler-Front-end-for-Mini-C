@@ -742,19 +742,13 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 Object l = visitMulExp(ctx.mulExp());
                 Object r = visitUnaryExp(ctx.unaryExp());
                 Register reg = Allocate("i32");
-//                if(l instanceof Register && r instanceof Register) {
-//                    Register L = (Register) l;
-//                    Register R = (Register) r;
-//                    ans += reg.name + " = " + getOp(ctx.calOp().getText()) + L.name + " , " + R.name + "\n";
-//                    return reg;
-//                }
                 String L,R;
                 if(l instanceof Integer)  L = ((Integer) l).toString();
                 else L = ((Register) l).name;
                 if(r instanceof Integer)  R = ((Integer) r).toString();
                 else R = ((Register) r).name;
                 ans += reg.name + " = " + getOp(ctx.calOp().getText()) + L + " , " + R + "\n";
-
+                return reg ;
             }
         }
         return null;
@@ -827,7 +821,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                         if(R.type.equals("i1")) {
                             Register temp = Allocate("i32");
                             ans += temp.name + " = " + "zext i1 " + R.name + " to i32\n";
-                            r = temp;
+                            R = temp;
                         }
                         Register reg = Allocate();
                         if(ctx.unaryOp().getText().equals("!")) {
