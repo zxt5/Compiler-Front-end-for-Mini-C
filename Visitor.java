@@ -428,17 +428,21 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             if(isConstant(name)) System.exit(-4);
             String curReg = getRegister(name);
             Object ret = visitExp(ctx.exp());
-            if(ret instanceof Register) {
-                Register ret1 = (Register) ret;
-                ans += "store i32 " + ret1.name + " , " + "i32* " + curReg + "\n";
+            String R;
+            if(ret instanceof Integer) { R = ((Integer) ret).toString(); }
+            else {
+                R = ((Register) ret).name;
             }
+            ans += "store i32 " + R + " , " + "i32* " + curReg + "\n";
         }
         else if(ctx.Return() != null) {      // 'return' Exp ';'
             Object reg = visitExp(ctx.exp());
-            if(reg instanceof Register) {
-                Register reg1 = (Register) reg;
-                ans += "ret " + reg1.type + " "+ reg1.name + "\n";
+            String R;
+            if(reg instanceof Integer) { R = ((Integer) reg).toString(); }
+            else {
+                R = ((Register) reg).name;
             }
+            ans += "ret i32 " + R + "\n";
             Allocate("i32");  // return 后要分配一个寄存器占位
             return null;
         }
