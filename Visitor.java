@@ -537,103 +537,125 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     @Override
     public Object visitLorExp(compUnitParser.LorExpContext ctx) {
         if(ctx.lorExp() != null) {    // LOrExp '||' LAndExp
-            Object lor_reg = visitLorExp(ctx.lorExp());
-            Object land_reg = visitLandExp(ctx.landExp());
-            if( lor_reg instanceof Register && land_reg instanceof Register ) {
-                Register lor_reg1 = (Register) lor_reg;
-                Register land_reg1 = (Register) land_reg;
-                Register cur_reg = Allocate("i1");
-                ans += cur_reg.name + " = " + "or " + "i1 " + lor_reg1.name + " , " + land_reg1.name + "\n";
-                return cur_reg;
+            Object l = visitLorExp(ctx.lorExp());
+            Object r = visitLandExp(ctx.landExp());
+            String L,R;
+            if( l instanceof Integer) {
+                Register reg = Allocate("i1");
+                ans += reg.name + " = " + "icmp " + "ne" + " i32 " + ((Integer) l).toString() + " , " +  "0" + "\n";
+                L = reg.name;
             }
+            else {
+                L = ((Register) l).name;
+            }
+            if(r instanceof Integer) {
+                Register reg = Allocate("i1");
+                ans += reg.name + " = " + "icmp " + "ne" + " i32 " + ((Integer) r).toString() + " , " +  "0" + "\n";
+                R = reg.name;
+            }
+            else {
+                R = ((Register) r).name;
+            }
+            Register cur_reg = Allocate("i1");
+            ans += cur_reg.name + " = " + "or " + "i1 " + L + " , " + R + "\n";
+            return cur_reg;
         }
         else {    // landExp
             return visitLandExp(ctx.landExp());
         }
-        return null;
     }
 
     @Override
     public Object visitLandExp(compUnitParser.LandExpContext ctx) {
         if(ctx.landExp() != null) {      // LAndExp '&&' EqExp
-            Object land_reg = visitLandExp(ctx.landExp());
-            Object eq_reg = visitEqExp(ctx.eqExp());
-            if(land_reg instanceof Register && eq_reg instanceof Register) {
-                Register land_reg1 = (Register) land_reg;
-                Register eq_reg1 = (Register) eq_reg;
-                Register cur_reg = Allocate("i1");
-                ans += cur_reg.name + " = " + "and " + "i1 " + land_reg1.name + " , " + eq_reg1.name + "\n";
-                return cur_reg;
+            Object l = visitLandExp(ctx.landExp());
+            Object r = visitEqExp(ctx.eqExp());
+            String L , R;
+            if(l instanceof Integer) {
+                Register reg = Allocate("i1");
+                ans += reg.name + " = " + "icmp " + "ne" + " i32 " + ((Integer) l).toString() + " , " +  "0" + "\n";
+                L = reg.name;
             }
+            else {
+                L = ((Register) l).name;
+            }
+            if(r instanceof Integer) {
+                Register reg = Allocate("i1");
+                ans += reg.name + " = " + "icmp " + "ne" + " i32 " + ((Integer) r).toString() + " , " +  "0" + "\n";
+                R = reg.name;
+            }
+            else {
+                R = ((Register) r).name;
+            }
+            Register cur_reg = Allocate("i1");
+            ans += cur_reg.name + " = " + "and " + "i1 " + L + " , " + R + "\n";
+            return cur_reg;
         }
         else {   // eqExp
             return visitEqExp(ctx.eqExp());
         }
-        return null;
     }
 
     @Override
     public Object visitEqExp(compUnitParser.EqExpContext ctx) {
         if(ctx.eqExp() != null) {    // EqExp ('==' | '!=') RelExp
-            Object eq_reg = visitEqExp(ctx.eqExp());
-            Object rel_reg = visitRelExp(ctx.relExp());
-            if(eq_reg instanceof Register && rel_reg instanceof Register) {
-                Register eq_reg1 = (Register) eq_reg;
-                Register rel_reg1 = (Register) rel_reg;
-                Register cur_reg = Allocate("i1");
-                //            %14 = icmp eq i32 %13, 10
-                if(eq_reg1.type.equals("i1")) {
+            Object l = visitEqExp(ctx.eqExp());
+            Object r = visitRelExp(ctx.relExp());
+            String L,R;
+            if(l instanceof Integer)  { L = ((Integer) l).toString(); }
+            else {
+                Register l1 = (Register) l;
+                if(l1.type.equals("i1")) {
                     Register temp1 = Allocate("i32");
-                    ans += temp1.name + " = " + "zext i1 " + eq_reg1.name + " to i32\n";
-                    eq_reg1 = temp1;
+                    ans += temp1.name + " = " + "zext i1 " + l1.name + " to i32\n";
+                    l1 = temp1;
                 }
-                if(rel_reg1.type.equals("i1")) {
-                    Register temp2 = Allocate("i32");
-                    ans += temp2.name + " = " + "zext i1 " + rel_reg1.name + " to i32\n";
-                    rel_reg1 = temp2;
-                }
-                ans += cur_reg.name + " = " + "icmp " + getOp(ctx.Equal().getText()) + " i32 " + eq_reg1.name + " , " + rel_reg1.name + "\n";
-                return cur_reg;
+                L = l1.name;
             }
+            if(r instanceof Integer) {  R = ((Integer) r).toString();  }
+            else {
+                Register r1 = (Register) r;
+                if(r1.type.equals("i1")) {
+                    Register temp2 = Allocate("i32");
+                    ans += temp2.name + " = " + "zext i1 " + r1.name + " to i32\n";
+                    r1 = temp2;
+                }
+                R = r1.name;
+            }
+            Register cur_reg = Allocate("i1");
+            ans += cur_reg.name + " = " + "icmp " + getOp(ctx.Equal().getText()) + " i32 " + L + " , " + R + "\n";
+            return cur_reg;
         }
         else {
             return visitRelExp(ctx.relExp());
         }
-        return null;
     }
 
     @Override
     public Object visitRelExp(compUnitParser.RelExpContext ctx) {
         if(ctx.relExp() != null) {   // RelExp ('<' | '>' | '<=' | '>=') AddExp
-            Object rel_reg = visitRelExp(ctx.relExp());
-            Object add_reg = visitAddExp(ctx.addExp());
+            Object l = visitRelExp(ctx.relExp());
+            Object r = visitAddExp(ctx.addExp());
             String L,R;
-            if(rel_reg instanceof Register ) {
-                Register rel_reg1 = (Register) rel_reg;
-                if(rel_reg1.type.equals("i1")) {
+            if( l instanceof Integer ) L = ((Integer) l).toString();
+            else {
+                Register l1 = (Register) l ;
+                if(l1.type.equals("i1")) {
                     Register temp1 = Allocate("i32");
-                    ans += temp1.name + " = " + "zext i1 " + rel_reg1.name + " to i32\n";
-                    rel_reg1 = temp1;
+                    ans += temp1.name + " = " + "zext i1 " + l1.name + " to i32\n";
+                    l1 = temp1;
                 }
-                L = rel_reg1.name;
+                L = l1.name;
             }
+            if( r instanceof Integer ) R = ((Integer) r).toString();
             else {
-                Integer rel_reg1 = (Integer) rel_reg;
-                L = rel_reg1.toString();
-            }
-
-            if(add_reg instanceof Register) {
-                Register add_reg1 = (Register) add_reg;
-                if(add_reg1.type.equals("i1")) {
+                Register r1 = (Register) r ;
+                if(r1.type.equals("i1")) {
                     Register temp2 = Allocate("i32");
-                    ans += temp2.name + " = " + "zext i1 " + add_reg1.name + " to i32\n";
-                    add_reg1 = temp2;
+                    ans += temp2.name + " = " + "zext i1 " + r1.name + " to i32\n";
+                    r1 = temp2;
                 }
-                R = add_reg1.name;
-            }
-            else {
-                Integer add_reg1 = (Integer) add_reg;
-                R = add_reg1.toString();
+                R = r1.name;
             }
             Register cur_reg = Allocate("i1");
             String cmp = getOp(ctx.Cmp().getText());
