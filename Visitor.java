@@ -56,7 +56,6 @@ class Function {
         this.parameter_list = parameter_list;
     }
 }
-
 class Register {
     String name;
     String type;
@@ -70,9 +69,6 @@ class Register {
         this.name = name;
     }
 }
-
-
-
 public class Visitor extends compUnitBaseVisitor<Object> {
     public String ans = "";
     int cnt = 0; // count register
@@ -104,8 +100,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         ans += "declare void @putint(i32)\n";
         ans += "declare void @putch(i32)\n";
     }
-
-
     // 分配寄存器
     public Register Allocate(String type) {
         String name = "%"+(++cnt);
@@ -214,9 +208,8 @@ public class Visitor extends compUnitBaseVisitor<Object> {
 
     // 判断变量在当前作用域是否定义
     public boolean isDefined_curField(String name) {
-        int size = cur_identifier_list.size();
-        for(int i = 0; i < size ; i++) {
-            if(cur_identifier_list.get(i).name.equals(name)) return true;
+        for (Identifier identifier : cur_identifier_list) {
+            if (identifier.name.equals(name)) return true;
         }
         return false;
     }
@@ -227,9 +220,8 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         for(int i = size-1 ; i>=0 ; i--) {
             Identifier_list tmp = Identifier_table.get(i);
             List<Identifier> list = tmp.list;
-            int len = list.size();
-            for(int j = 0; j < len ; j++) {
-                if(list.get(j).name.equals(name)) {
+            for (Identifier identifier : list) {
+                if (identifier.name.equals(name)) {
                     return true;
                 }
             }
@@ -243,10 +235,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         for(int i = size-1 ; i>=0 ; i--) {
             Identifier_list tmp = Identifier_table.get(i);
             List<Identifier> list = tmp.list;
-            int len = list.size();
-            for(int j = 0; j < len ; j++) {
-                if(list.get(j).name.equals(name)) {
-                    return list.get(j).isConst;
+            for (Identifier identifier : list) {
+                if (identifier.name.equals(name)) {
+                    return identifier.isConst;
                 }
             }
         }
@@ -267,9 +258,8 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         for(int i = size-1 ; i>=0 ; i--) {
             Identifier_list tmp = Identifier_table.get(i);
             List<Identifier> list = tmp.list;
-            int len = list.size();
-            for(int j = 0; j < len ; j++) {
-                if(list.get(j).name.equals(name)) return list.get(j).register.name;
+            for (Identifier identifier : list) {
+                if (identifier.name.equals(name)) return identifier.register.name;
             }
         }
         return null;
@@ -407,8 +397,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         // 加入常量池
         Identifier identifier = new Identifier(name,null,true,isGlobal,val);
         cur_identifier_list.add(identifier);
-
-//        ans += name + " = " + val + "!!!\n";
         return null;
     }
 
@@ -871,7 +859,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         }
         return null;
     }
-
     @Override
     public Object visitLVal(compUnitParser.LValContext ctx) {
         String name = ctx.Ident().getText();
@@ -883,7 +870,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         }
         if(isConstant(name)) {  // 常量返回int
             int val = getValue_byName(name);
-//            ans += name + " = " + val + "!!!\n";
             return val;
         }
         else {  // 变量返回寄存器
@@ -918,12 +904,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         else {  // 变量
             if(ctx.exp() == null) {
                 if(ctx.lVal()==null) {  // Number
-//                    Register reg = Allocate("i32");
-//                    ans += reg.name + " = alloca i32\n";
-//                    ans += "store i32 " + getNumber(ctx.Number().getText()) + " , " + "i32* " + reg.name + "\n";
-//                    Register temp = Allocate("i32");
-//                    ans += temp.name + " = load i32, i32* " + reg.name + "\n";
-//                    return temp;
                     int number = Integer.parseInt( getNumber(ctx.Number().getText()) );
                     return number;
                 }
