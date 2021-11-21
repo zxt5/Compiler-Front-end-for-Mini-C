@@ -729,7 +729,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 String L,R;
                 if(l instanceof Integer)  L = ((Integer) l).toString();
                 else L = ((Register) l).name;
-                if(r instanceof Integer)  R = ((Integer) l).toString();
+                if(r instanceof Integer)  R = ((Integer) r).toString();
                 else R = ((Register) r).name;
                 ans += reg.name + " = " + getOp(ctx.calOp().getText()) + L + " , " + R + "\n";
 
