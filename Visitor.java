@@ -38,19 +38,6 @@ class Identifier_list {
     }
 }
 
-//class Constant {
-//    String name;
-//    Register register;
-//    String type;
-//
-//    public Constant(String name,Register register) {
-//        this.name = name;
-//        this.register = register;
-//    }
-//}
-
-
-
 class Function {
     String name;
     String returnType; // int  void String ...
@@ -89,16 +76,13 @@ class Register {
 public class Visitor extends compUnitBaseVisitor<Object> {
     public String ans = "";
     int cnt = 0; // count register
-    int cnt_block = 0;
-    public boolean isConst = false;
-    public boolean isGlobal = false;
-    public String cur_while_head;
-    public String cur_while_end;
-    boolean is_break_or_continue = false;
-    //    List<Identifier> Identifier_list = new ArrayList<>();  // 变量表
-//    List<Constant> Constant_list = new ArrayList<>();      // 常量表
-//    Identifier_list cur_identifier_list = null;
-    List<Identifier> cur_identifier_list = null;
+    int cnt_block = 0;  // 块的数量
+    public boolean isConst = false;  // 标记是否正在处理常量
+    public boolean isGlobal = false;  // 标记是否正在处理全局变量
+    public String cur_while_head;  // 标记当前while的开始，即条件判断
+    public String cur_while_end;   // 标记当前while结束后的代码位置
+    boolean is_break_or_continue = false;  // 标记访问的while循环中是否有break或continue
+    List<Identifier> cur_identifier_list = null;  // 当前符号表
     List<Identifier_list> Identifier_table = new ArrayList<>(); // 符号表
     List<Function> Function_list = new ArrayList<>();     // 函数表
     List<Register> Register_list = new ArrayList<>();      // 寄存器表
@@ -129,7 +113,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         Register_list.add(reg);
         return reg;
     }
-
     public Register Allocate() {
         String name = "%"+(++cnt);
         Register reg = new Register(name);
@@ -193,9 +176,8 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         for(int i = size-1 ; i>=0 ; i--) {
             Identifier_list tmp = Identifier_table.get(i);
             List<Identifier> list = tmp.list;
-            int len = list.size();
-            for(int j = 0; j < len ; j++) {
-                if(list.get(j).name.equals(name)) {
+            for (Identifier identifier : list) {
+                if (identifier.name.equals(name)) {
                     return list.get(i).value;
                 }
             }
@@ -205,7 +187,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
 
     // 数制转换
     public String getNumber(String num) {
-//        System.out.println(num);
         int val = 0;
         if (num.charAt(0)=='0'&&num.length()>1){
             if(num.charAt(1)=='x'||num.charAt(1)=='X') {
@@ -378,7 +359,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             Register reg = new Register("@"+ name , "i32");
             Identifier identifier = new Identifier(name,reg,false,isGlobal,val);
             cur_identifier_list.add(identifier);
-//            @a = dso_local global i32 5
             ans += "@" + name + " = " + "dso_local global i32 " + val + "\n";
         }
         else {
@@ -405,11 +385,10 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     }
 
     @Override
-    public String visitConstDecl(compUnitParser.ConstDeclContext ctx) {
+    public String visitConstDecl(compUnitParser.ConstDeclContext ctx) {   // constDecl  : 'const' Type constDef (',' constDef )* ';' ;
         this.isConst = true;
         int n = ctx.constDef().size();
         for(int i=0 ; i<n ; i++) {
-//            String name = ctx.constDef(i).getText();
             visitConstDef(ctx.constDef(i));
         }
         this.isConst = false;
@@ -417,7 +396,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     }
 
     @Override
-    public String visitConstDef(compUnitParser.ConstDefContext ctx) {
+    public String visitConstDef(compUnitParser.ConstDefContext ctx) {    //  constDef  : Ident '=' constInitVal ;
         int val = 0;
         String name = ctx.Ident().getText();
         if(isDefined_curField(name)) System.exit(-2);
@@ -479,12 +458,12 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     ans += "br i1 " + reg_cond1.name + " , label %" + block_stmt + " , label %" + block_next + "\n";
                     ans += "\n" + block_stmt + ":\n";
                     is_break_or_continue = false;
-                    Object ret = visitStmt(ctx.stmt().get(0));
 
-                    if(!is_break_or_continue) {   // !!!!!!
+                    visitStmt(ctx.stmt().get(0));
+
+                    if(!is_break_or_continue) {
                         ans += "br label %" + block_next + "\n";
                     }
-//                    else return null;
                     is_break_or_continue = false;
                     ans += "\n" + block_next + ":\n";
                 }
@@ -503,7 +482,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     visitStmt(ctx.stmt().get(1));
                     if(!is_break_or_continue)
                         ans += "br label %" + block_next + "\n";
-//                    else return null;
                     is_break_or_continue = false;
                     ans += "\n" + block_next + ":\n";
                 }
@@ -568,9 +546,8 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 ans += cur_reg.name + " = " + "or " + "i1 " + lor_reg1.name + " , " + land_reg1.name + "\n";
                 return cur_reg;
             }
-
         }
-        else {
+        else {    // landExp
             return visitLandExp(ctx.landExp());
         }
         return null;
@@ -589,7 +566,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 return cur_reg;
             }
         }
-        else {
+        else {   // eqExp
             return visitEqExp(ctx.eqExp());
         }
         return null;
@@ -668,8 +645,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         }
     }
 
-
-
     @Override
     public Object visitExp(compUnitParser.ExpContext ctx) {
         return visitAddExp(ctx.addExp());
@@ -677,7 +652,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
 
     @Override
     public Object visitAddExp(compUnitParser.AddExpContext ctx) {
-        if(isConst || isGlobal) {  // 正在给常量赋值
+        if(isConst || isGlobal) {  // 正在处理常量
             if(ctx.addExp()==null) {
                 return visitMulExp(ctx.mulExp());
             }
@@ -693,7 +668,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 }
             }
         }
-        else {   // 正在给变量赋值
+        else {
             if(ctx.addExp()==null) {
                 return visitMulExp(ctx.mulExp());
             }
@@ -733,12 +708,11 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     Integer R = (Integer) r;
                     String Op = ctx.calOp().getText();
                     int ret = Calculate( L , R , Op);
-//                    System.out.println(ret);
                     return ret;
                 }
             }
         }
-        else {  // 变量
+        else {
             if( ctx.mulExp()==null ) {
                 return visitUnaryExp(ctx.unaryExp());
             }
@@ -746,12 +720,19 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 Object l = visitMulExp(ctx.mulExp());
                 Object r = visitUnaryExp(ctx.unaryExp());
                 Register reg = Allocate("i32");
-                if(l instanceof Register && r instanceof Register) {
-                    Register L = (Register) l;
-                    Register R = (Register) r;
-                    ans += reg.name + " = " + getOp(ctx.calOp().getText()) + L.name + " , " + R.name + "\n";
-                    return reg;
-                }
+//                if(l instanceof Register && r instanceof Register) {
+//                    Register L = (Register) l;
+//                    Register R = (Register) r;
+//                    ans += reg.name + " = " + getOp(ctx.calOp().getText()) + L.name + " , " + R.name + "\n";
+//                    return reg;
+//                }
+                String L,R;
+                if(l instanceof Integer)  L = ((Integer) l).toString();
+                else L = ((Register) l).name;
+                if(r instanceof Integer)  R = ((Integer) l).toString();
+                else R = ((Register) r).name;
+                ans += reg.name + " = " + getOp(ctx.calOp().getText()) + L + " , " + R + "\n";
+
             }
         }
         return null;
@@ -872,7 +853,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         }
 
     }
-
     // primaryExp   : '(' exp ')' | lVal | Number ;
     @Override
     public Object visitPrimaryExp(compUnitParser.PrimaryExpContext ctx) {
@@ -897,13 +877,14 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         else {  // 变量
             if(ctx.exp() == null) {
                 if(ctx.lVal()==null) {  // Number
-                    Register reg = Allocate("i32");
-                    ans += reg.name + " = alloca i32\n";
-//                ans += reg.name + " = load i32, i32 " + getNumber(ctx.Number().getText()) + "\n";
-                    ans += "store i32 " + getNumber(ctx.Number().getText()) + " , " + "i32* " + reg.name + "\n";
-                    Register temp = Allocate("i32");
-                    ans += temp.name + " = load i32, i32* " + reg.name + "\n";
-                    return temp;
+//                    Register reg = Allocate("i32");
+//                    ans += reg.name + " = alloca i32\n";
+//                    ans += "store i32 " + getNumber(ctx.Number().getText()) + " , " + "i32* " + reg.name + "\n";
+//                    Register temp = Allocate("i32");
+//                    ans += temp.name + " = load i32, i32* " + reg.name + "\n";
+//                    return temp;
+                    int number = Integer.parseInt( getNumber(ctx.Number().getText()) );
+                    return number;
                 }
                 else {
                     return visitLVal(ctx.lVal());
