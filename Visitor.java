@@ -178,7 +178,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             List<Identifier> list = tmp.list;
             for (Identifier identifier : list) {
                 if (identifier.name.equals(name)) {
-                    return list.get(i).value;
+                    return identifier.value;
                 }
             }
         }
@@ -407,6 +407,8 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         // 加入常量池
         Identifier identifier = new Identifier(name,null,true,isGlobal,val);
         cur_identifier_list.add(identifier);
+
+//        ans += name + " = " + val + "!!!\n";
         return null;
     }
 
@@ -713,6 +715,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 else
                     R = ((Integer) r).toString();
 
+//                ans += L + " , " + R + "!!\n";
                 ans += reg.name + " = " + getOp(ctx.unaryOp().getText()) + L + " , " + R + "\n";
                 return reg;
             }
@@ -863,6 +866,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         }
         if(isConstant(name)) {  // 常量返回int
             int val = getValue_byName(name);
+//            ans += name + " = " + val + "!!!\n";
             return val;
         }
         else {  // 变量返回寄存器
