@@ -791,10 +791,11 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     case "putint": {
                         if (ctx.funcRParams().exp().size() != 1) System.exit(-7);
                         Object reg = visitExp(ctx.funcRParams().exp(0));
-                        if(reg instanceof Register) {
-                            Register REG = (Register) reg;
-                            ans += "call void @putint(i32 " + REG.name + ")\n";
-                        }
+                        String num;
+                        if(reg instanceof Integer) num = ((Integer)reg).toString();
+                        else num = ((Register) reg).name;
+
+                        ans += "call void @putint(i32 " + num + ")\n";
                         break;
                     }
                     case "getch": {
@@ -806,10 +807,12 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     case "putch": {
                         if (ctx.funcRParams().exp().size() != 1) System.exit(-9);
                         Object reg = visitExp(ctx.funcRParams().exp(0));
-                        if( reg instanceof Register ) {
-                            Register REG = (Register) reg;
-                            ans += "call void @putch(i32 " + REG.name + ")\n";
+                        String ch;
+                        if(reg instanceof Integer) ch = ((Integer)reg).toString();
+                        else {
+                            ch = ((Register) reg).name;
                         }
+                        ans += "call void @putch(i32 " + ch + ")\n";
                         break;
                     }
                     default:
