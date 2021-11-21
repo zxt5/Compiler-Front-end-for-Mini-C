@@ -347,7 +347,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     }
 
     @Override
-    public String visitVarDef(compUnitParser.VarDefContext ctx) {
+    public String visitVarDef(compUnitParser.VarDefContext ctx) {  // Ident | Ident '=' initVal ;
         String name = ctx.Ident().getText();
         if(isDefined_curField(name)) System.exit(-1);
         if(isGlobal) {
@@ -370,10 +370,10 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             // 赋值
             if(ctx.initVal()!=null) {
                 Object ret = visitInitVal(ctx.initVal());
-                if(ret instanceof Register) {
-                    Register ret1 = (Register) ret;
-                    ans += "store i32 " + ret1.name + " , " + "i32* " + reg.name + "\n" ;
-                }
+                String L ;
+                if(ret instanceof Integer) { L = ((Integer) ret).toString(); }
+                else L = ((Register) ret).name;
+                ans += "store i32 " + L + " , " + "i32* " + reg.name + "\n" ;
             }
         }
         return null;
