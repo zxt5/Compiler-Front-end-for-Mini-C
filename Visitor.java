@@ -113,6 +113,8 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     List<Integer> cur_array_dimension ; // 当前处理的数组每一维的长度
     int cur_array_flag ; // 遍历到正在处理的数组的哪一维
 
+    boolean isLeft = false; // 是否正在处理左值
+
     public void init() {
         // 初始化函数表
         Function_list.add(new Function("getint","i32"));
@@ -644,11 +646,12 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     @Override
     public Object visitStmt(compUnitParser.StmtContext ctx) {
         if(ctx.lVal() != null) {             // LVal '=' Exp ';'
-
             String name = ctx.lVal().Ident().getText();
             if(!isDefined_allField(name)) System.exit(-3); // 如果变量未定义，报错
             if(isConstant(name)) System.exit(-4);
+            isLeft = true;
             Object lval = visitLVal(ctx.lVal());
+            isLeft = false;
             String S="";
             if(lval instanceof Register ) {
                 if(((Register) lval).type.equals("i32*"))
@@ -1224,9 +1227,15 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             }
             else {  // 变量返回寄存器
                 Register reg = getRegister(name);
-//                Register newReg = Allocate("i32");
-//                ans += newReg.name + " = load i32, i32* " + reg + "\n";
-                return reg;
+                if(isLeft) {
+                    return reg;
+                }
+                else {
+                    Register newReg = Allocate("i32");
+                    ans += newReg.name + " = load i32, i32* " + reg.name + "\n";
+                    return newReg;
+                }
+
             }
         }
         else {                                     // 数组
