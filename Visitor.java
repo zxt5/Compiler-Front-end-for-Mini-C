@@ -387,7 +387,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         String name = ctx.Ident().getText();
         if(isDefined_curField(name)) System.exit(-1);
 
-        if(ctx.constExp() == null)  {   ///////////// int
+        if(ctx.constExp().size()==0)  {   ///////////// int
             if(isGlobal) {
                 int val = 0;
                 if(ctx.initVal()!=null) {
@@ -404,6 +404,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 ans += reg.name + " = alloca i32\n";
                 // 加入变量池
                 Identifier identifier = new Identifier(name,reg,false,isGlobal);
+//                System.out.println(identifier.name + "\n"); //debug
                 cur_identifier_list.add(identifier);
                 // 赋值
                 if(ctx.initVal()!=null) {
@@ -1072,13 +1073,14 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     @Override
     public Object visitLVal(compUnitParser.LValContext ctx) {    //  Ident {'[' Exp ']'}
         String name = ctx.Ident().getText();
+//        System.out.println(name + " !!\n"); //debug
         if(!isDefined_allField(name)) {
             System.exit(-10);
         }
         if(!isConstant(name) && ( isConst || isGlobal)) {
             System.exit(-11);
         }
-        if( ctx.exp() == null ) {                     // 数
+        if( ctx.exp().size() == 0 ) {                     // 数
             if(isConstant(name)) {  // 常量返回int
                 int val = getValue_byName(name);
                 return val;
@@ -1093,6 +1095,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         else {                                     // 数组
             int N = ctx.exp().size();
             Identifier I = getArray_byName(name);
+//            System.out.println(name +" **\n"); //debug
             if(I==null) System.exit(-56);  // 数组未定义
             if(N != I.dimension) System.exit(-57); // 索引维数不对
             String cur_Address = "0";
