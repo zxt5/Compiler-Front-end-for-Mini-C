@@ -464,7 +464,8 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     if(isGlobal) {
                         ans += reg.name + " = dso_local global " + "[" + I.size + " x i32] [";
                         for (int i = 0 ; i < I.size ; i++) {
-                            ans += "i32 " + I.num.get(i) + ", ";
+                            ans += "i32 " + I.num.get(i) ;
+                            if(i < I.size-1) ans += ", ";
                         }
                         ans += "]\n";
                     }
