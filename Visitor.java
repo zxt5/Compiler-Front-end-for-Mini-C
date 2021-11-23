@@ -676,6 +676,13 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     ans += cur_reg.name + " = trunc i32 " + reg_cond1.name + " to i1\n";
                     COND = cur_reg.name;
                 }
+                else if(reg_cond1.type.equals("i32*")) {
+                    Register R = Allocate("i32");
+                    Register L = Allocate("i1");
+                    ans += R.name + " = load i32, i32* " + reg_cond1.name + "\n" ;
+                    ans += L.name + " = trunc i32 " + R.name + " to i1\n";
+                    COND = L.name;
+                }
                 else COND = reg_cond1.name;
             }
             if(stmt_len == 1) {  // 只有if没有else
@@ -730,6 +737,13 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     Register cur_reg = Allocate("i1");
                     ans += cur_reg.name + " = trunc i32 " + reg_cond1.name + " to i1\n";
                     COND = cur_reg.name;
+                }
+                else if(reg_cond1.type.equals("i32*")) {
+                    Register R = Allocate("i32");
+                    Register L = Allocate("i1");
+                    ans += R.name + " = load i32, i32* " + reg_cond1.name + "\n" ;
+                    ans += L.name + " = trunc i32 " + R.name + " to i1\n";
+                    COND = L.name;
                 }
                 else COND = reg_cond1.name;
             }
@@ -906,85 +920,99 @@ public class Visitor extends compUnitBaseVisitor<Object> {
 
     @Override
     public Object visitAddExp(compUnitParser.AddExpContext ctx) {
-        if(isConst || isGlobal) {  // 正在处理常量
-            if(ctx.addExp()==null) {
-                return visitMulExp(ctx.mulExp());
-            }
-            else {
-                Object l = visitAddExp(ctx.addExp());
-                Object r = visitMulExp(ctx.mulExp());
-                if(l instanceof Integer && r instanceof Integer) {
-                    Integer L = (Integer) l;
-                    Integer R = (Integer) r;
-                    String Op = ctx.unaryOp().getText();
-                    int ret = Calculate( L , R , Op);
-                    return ret;
-                }
-            }
+        if(ctx.addExp()==null) {
+            return visitMulExp(ctx.mulExp());
+        }
+        Object l = visitAddExp(ctx.addExp());
+        Object r = visitMulExp(ctx.mulExp());
+//        if(isConst || isGlobal) {  // 正在处理常量
+        if(l instanceof Integer && r instanceof Integer) {
+            Integer l1 = (Integer) l;
+            Integer r1 = (Integer) r;
+            String Op = ctx.unaryOp().getText();
+            int ret = Calculate( l1 , r1 , Op);
+            return ret;
         }
         else {
-            if(ctx.addExp()==null) {
-                return visitMulExp(ctx.mulExp());
+            String L,R;
+            if( l instanceof Integer ) {
+                L = ((Integer) l).toString();
             }
             else {
-                Object l = visitAddExp(ctx.addExp());
-                Object r = visitMulExp(ctx.mulExp());
-                Register reg = Allocate("i32");
-                String L , R;
-                if( l instanceof Register)
+                if( ((Register)l).type.equals("i32*") ) {
+                    Register Reg = Allocate("i32");
+                    ans += Reg.name + " = load i32, i32* " + ((Register)l).name + "\n";
+                    L = Reg.name;
+                }
+                else {
                     L = ((Register) l).name;
-                else
-                    L = ((Integer) l).toString();
-
-                if( r instanceof Register)
-                    R = ((Register) r).name;
-                else
-                    R = ((Integer) r).toString();
-
-//                ans += L + " , " + R + "!!\n";
-                ans += reg.name + " = " + getOp(ctx.unaryOp().getText()) + L + " , " + R + "\n";
-                return reg;
+                }
             }
+            if( r instanceof Integer ) {
+                R = ((Integer) r).toString();
+            }
+            else {
+                if( ((Register)r).type.equals("i32*") ) {
+                    Register Reg = Allocate("i32");
+                    ans += Reg.name + " = load i32, i32* " + ((Register)r).name + "\n";
+                    R = Reg.name;
+                }
+                else {
+                    R = ((Register) r).name;
+                }
+            }
+            Register ret = Allocate("i32");
+            ans += ret.name + " = " + getOp(ctx.unaryOp().getText()) + L + " , " + R + "\n";
+            return ret;
         }
-        return null;
     }
 
     @Override
     public Object visitMulExp(compUnitParser.MulExpContext ctx) {
-        if(isConst || isGlobal) {  // 常量
-            if( ctx.mulExp()==null ) {
-                return visitUnaryExp(ctx.unaryExp());
-            }
-            else {
-                Object l = visitMulExp(ctx.mulExp());
-                Object r = visitUnaryExp(ctx.unaryExp());
-                if(l instanceof Integer && r instanceof Integer) {
-                    Integer L = (Integer) l;
-                    Integer R = (Integer) r;
-                    String Op = ctx.calOp().getText();
-                    int ret = Calculate( L , R , Op);
-                    return ret;
-                }
-            }
+        if( ctx.mulExp()==null ) {
+            return visitUnaryExp(ctx.unaryExp());
+        }
+        Object l = visitMulExp(ctx.mulExp());
+        Object r = visitUnaryExp(ctx.unaryExp());
+        if(l instanceof Integer && r instanceof Integer) {
+            Integer L = (Integer) l;
+            Integer R = (Integer) r;
+            String Op = ctx.calOp().getText();
+            int ret = Calculate( L , R , Op);
+            return ret;
         }
         else {
-            if( ctx.mulExp()==null ) {
-                return visitUnaryExp(ctx.unaryExp());
+            String L,R;
+            if( l instanceof Integer ) {
+                L = ((Integer) l).toString();
             }
             else {
-                Object l = visitMulExp(ctx.mulExp());
-                Object r = visitUnaryExp(ctx.unaryExp());
-                Register reg = Allocate("i32");
-                String L,R;
-                if(l instanceof Integer)  L = ((Integer) l).toString();
-                else L = ((Register) l).name;
-                if(r instanceof Integer)  R = ((Integer) r).toString();
-                else R = ((Register) r).name;
-                ans += reg.name + " = " + getOp(ctx.calOp().getText()) + L + " , " + R + "\n";
-                return reg ;
+                if( ((Register)l).type.equals("i32*") ) {
+                    Register Reg = Allocate("i32");
+                    ans += Reg.name + " = load i32, i32* " + ((Register)l).name + "\n";
+                    L = Reg.name;
+                }
+                else {
+                    L = ((Register) l).name;
+                }
             }
+            if( r instanceof Integer ) {
+                R = ((Integer) r).toString();
+            }
+            else {
+                if( ((Register)r).type.equals("i32*") ) {
+                    Register Reg = Allocate("i32");
+                    ans += Reg.name + " = load i32, i32* " + ((Register)r).name + "\n";
+                    R = Reg.name;
+                }
+                else {
+                    R = ((Register) r).name;
+                }
+            }
+            Register ret = Allocate("i32");
+            ans += ret.name + " = " + getOp(ctx.calOp().getText()) + L + " , " + R + "\n";
+            return ret ;
         }
-        return null;
     }
 
     @Override
@@ -1016,12 +1044,22 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     }
                     case "putint": {
                         if (ctx.funcRParams().exp().size() != 1) System.exit(-7);
-                        Object reg = visitExp(ctx.funcRParams().exp(0));
-                        String num;
-                        if(reg instanceof Integer) num = ((Integer)reg).toString();
-                        else num = ((Register) reg).name;
-
-                        ans += "call void @putint(i32 " + num + ")\n";
+                        Object E = visitExp(ctx.funcRParams().exp(0));
+                        String R = "";
+                        if(E instanceof Integer) R = ((Integer)E).toString();
+                        else if(E instanceof Register){
+                            Register Reg = (Register) E;
+                            if (Reg.type.equals("i32")) {
+                                R = ((Register) Reg).name;
+                            } else if (Reg.type.equals("i32*")) {
+                                Register R1 = Allocate("i32");
+                                ans += R1.name + " = load i32, i32* " + Reg.name + "\n";
+                            } else {
+                                System.exit(-30);
+                            }
+                            ans += "call void @putint(i32 " + R + ")\n";
+                        }
+                        else { System.exit(-31); }
                         break;
                     }
                     case "getch": {
@@ -1032,13 +1070,22 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     }
                     case "putch": {
                         if (ctx.funcRParams().exp().size() != 1) System.exit(-9);
-                        Object reg = visitExp(ctx.funcRParams().exp(0));
-                        String ch;
-                        if(reg instanceof Integer) ch = ((Integer)reg).toString();
-                        else {
-                            ch = ((Register) reg).name;
+                        Object E = visitExp(ctx.funcRParams().exp(0));
+                        String R = "";
+                        if(E instanceof Integer) R = ((Integer)E).toString();
+                        else if(E instanceof Register){
+                            Register Reg = (Register) E;
+                            if (Reg.type.equals("i32")) {
+                                R = ((Register) Reg).name;
+                            } else if (Reg.type.equals("i32*")) {
+                                Register R1 = Allocate("i32");
+                                ans += R1.name + " = load i32, i32* " + Reg.name + "\n";
+                            } else {
+                                System.exit(-32);
+                            }
+                            ans += "call void @putch(i32 " + R + ")\n";
                         }
-                        ans += "call void @putch(i32 " + ch + ")\n";
+                        else { System.exit(-33); }
                         break;
                     }
                     default:
