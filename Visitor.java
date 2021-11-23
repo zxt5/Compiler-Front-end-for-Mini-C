@@ -1198,7 +1198,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                         String Op = ctx.unaryOp().getText();
                         Integer R = (Integer) r;
                         if(Op.equals("-")) R = -R;
-                        ans += R + "\n";
+//                        ans += R + "\n";
                         return R;
                     }
                     else { System.exit(-97); }
