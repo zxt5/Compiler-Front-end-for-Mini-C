@@ -856,6 +856,11 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     ans += temp1.name + " = " + "zext i1 " + l1.name + " to i32\n";
                     l1 = temp1;
                 }
+                else if(l1.type.equals("i32*")) {
+                    Register Reg = Allocate("i32");
+                    ans += Reg.name + " = load i32, i32* " + l1.name + "\n";
+                    l1 = Reg;
+                }
                 L = l1.name;
             }
             if(r instanceof Integer) {  R = ((Integer) r).toString();  }
@@ -865,6 +870,11 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     Register temp2 = Allocate("i32");
                     ans += temp2.name + " = " + "zext i1 " + r1.name + " to i32\n";
                     r1 = temp2;
+                }
+                else if(r1.type.equals("i32*")) {
+                    Register Reg = Allocate("i32");
+                    ans += Reg.name + " = load i32, i32* " + r1.name + "\n";
+                    r1 = Reg;
                 }
                 R = r1.name;
             }
@@ -891,6 +901,11 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     ans += temp1.name + " = " + "zext i1 " + l1.name + " to i32\n";
                     l1 = temp1;
                 }
+                else if(l1.type.equals("i32*")) {
+                    Register Reg = Allocate("i32");
+                    ans += Reg.name + " = load i32, i32* " + l1.name + "\n";
+                    l1 = Reg;
+                }
                 L = l1.name;
             }
             if( r instanceof Integer ) R = ((Integer) r).toString();
@@ -900,6 +915,11 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     Register temp2 = Allocate("i32");
                     ans += temp2.name + " = " + "zext i1 " + r1.name + " to i32\n";
                     r1 = temp2;
+                }
+                else if(r1.type.equals("i32*")) {
+                    Register Reg = Allocate("i32");
+                    ans += Reg.name + " = load i32, i32* " + r1.name + "\n";
+                    r1 = Reg;
                 }
                 R = r1.name;
             }
