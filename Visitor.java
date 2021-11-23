@@ -1067,7 +1067,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             }
             else {  // UnaryOp UnaryExp
                 Object r = visitUnaryExp(ctx.unaryExp());
-                String Op = getOp(ctx.unaryOp().getText());
+                String Op = ctx.unaryOp().getText();
                 if( r instanceof Integer) {
                     Integer R = (Integer) r;
                     if(Op.equals("-")) R = -R;
@@ -1140,7 +1140,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             }
             else {
                 if( ctx.unaryExp()==null ) {
-//                    System.out.println("here");
                     return visitPrimaryExp(ctx.primaryExp());
                 }
                 else {
@@ -1164,9 +1163,10 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                         return reg;
                     }
                     else if(r instanceof Integer){
-                        String Op = getOp(ctx.unaryOp().getText());
+                        String Op = ctx.unaryOp().getText();
                         Integer R = (Integer) r;
                         if(Op.equals("-")) R = -R;
+                        ans += R + "\n";
                         return R;
                     }
                     else { System.exit(-97); }
