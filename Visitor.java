@@ -1117,7 +1117,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                         if (ctx.funcRParams().exp().size() != 1) System.exit(-9);
                         Object E = visitExp(ctx.funcRParams().exp(0));
                         String R = "";
-                        if(E instanceof Integer) R = ((Integer)E).toString();
+                        if(E instanceof Integer) {
+                            R = ((Integer)E).toString();
+                        }
                         else if(E instanceof Register){
                             Register Reg = (Register) E;
                             if (Reg.type.equals("i32")) {
@@ -1129,9 +1131,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                             } else {
                                 System.exit(-32);
                             }
-                            ans += "call void @putch(i32 " + R + ")\n";
                         }
                         else { System.exit(-33); }
+                        ans += "call void @putch(i32 " + R + ")\n";
                         break;
                     }
                     default:
