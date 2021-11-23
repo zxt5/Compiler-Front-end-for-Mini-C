@@ -847,23 +847,46 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         if(ctx.landExp() != null) {      // LAndExp '&&' EqExp
             Object l = visitLandExp(ctx.landExp());
             Object r = visitEqExp(ctx.eqExp());
-            String L , R;
+            String L="" , R="";
             if(l instanceof Integer) {
                 Register reg = Allocate("i1");
                 ans += reg.name + " = " + "icmp " + "ne" + " i32 " + ((Integer) l).toString() + " , " +  "0" + "\n";
                 L = reg.name;
             }
-            else {
-                L = ((Register) l).name;
+            else if(l instanceof Register){
+                Register T = (Register) l;
+                if(T.type.equals("i32"))  { L = ((Register) l).name; }
+                else if(T.type.equals("i32*")) {
+                    Register Reg1 = Allocate("i32");
+                    ans += Reg1.name + " = load i32 , i32* " + T.name + "\n" ;
+                    Register Reg2 = Allocate("i1");
+                    ans += Reg2.name + " = " + "icmp " + "ne" + " i32 " + Reg1.name + " , " +  "0" + "\n";
+                    L = Reg2.name ;
+                }
+                else if(T.type.equals("i1")) { L = T.name; }
+                else { System.exit(-101); }
             }
+            else { System.exit(-102); }
+
             if(r instanceof Integer) {
                 Register reg = Allocate("i1");
                 ans += reg.name + " = " + "icmp " + "ne" + " i32 " + ((Integer) r).toString() + " , " +  "0" + "\n";
                 R = reg.name;
             }
-            else {
-                R = ((Register) r).name;
+            else if(r instanceof Register){
+                Register T = (Register) r;
+                if(T.type.equals("i32"))  { R = ((Register) r).name; }
+                else if(T.type.equals("i32*")) {
+                    Register Reg1 = Allocate("i32");
+                    ans += Reg1.name + " = load i32 , i32* " + T.name + "\n" ;
+                    Register Reg2 = Allocate("i1");
+                    ans += Reg2.name + " = " + "icmp " + "ne" + " i32 " + Reg1.name + " , " +  "0" + "\n";
+                    R = Reg2.name ;
+                }
+                else if(T.type.equals("i1")) { R = T.name; }
+                else { System.exit(-103); }
             }
+            else { System.exit(-104); }
             Register cur_reg = Allocate("i1");
             ans += cur_reg.name + " = " + "and " + "i1 " + L + " , " + R + "\n";
             return cur_reg;
@@ -923,9 +946,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         if(ctx.relExp() != null) {   // RelExp ('<' | '>' | '<=' | '>=') AddExp
             Object l = visitRelExp(ctx.relExp());
             Object r = visitAddExp(ctx.addExp());
-//            System.out.println("debug: " + r);
             String L,R;
-//            System.out.println("debug: " + l+ "  || " + r);
             if( l instanceof Integer ) L = ((Integer) l).toString();
             else {
                 Register l1 = (Register) l ;
@@ -1022,7 +1043,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
 
     @Override
     public Object visitMulExp(compUnitParser.MulExpContext ctx) {
-//        System.out.println("debug: " + ctx.getText()); -1
         if( ctx.mulExp()==null ) {
             return visitUnaryExp(ctx.unaryExp());
         }
@@ -1270,13 +1290,11 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         if(isConst || isGlobal) { // 常量
             if(ctx.exp() == null) {
                 if(ctx.lVal() == null) {  // number
-//                    System.out.println("debug:  " + ctx.Number().getText());
                     int number = Integer.parseInt( getNumber(ctx.Number().getText()) );
                     return number;
                 }
                 else {
                     String ret = ctx.lVal().Ident().getText(); // 变量名
-                    System.out.println(ret);
                     if(!isConstant(ret)) System.exit(-77); // 检查是否是常量
                     // 需要根据常量名获取值
                     int val = getValue_byName(ret);
@@ -1290,9 +1308,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         else {  // 变量
             if(ctx.exp() == null) {
                 if(ctx.lVal()==null) {  // Number
-//                    System.out.println("Here");
                     int number = Integer.parseInt( getNumber(ctx.Number().getText()) );
-//                    System.out.println("debug:" + number);
                     return number;
                 }
                 else {
