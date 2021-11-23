@@ -513,7 +513,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     Register O = (Register)o;
                     if(O.type.equals("i32*")) {
                         Register T = Allocate("i32");
-                        ans += T.name + " load i32 , i32* " + O.name + "\n";
+                        ans += T.name + " =  load i32 , i32* " + O.name + "\n";
                         ret.add(T.name);
                     }
                     else { ret.add( ((Register) o).name ); }
