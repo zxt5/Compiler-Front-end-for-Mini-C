@@ -280,9 +280,12 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         int size = Identifier_table.size();
         for(int i = size-1 ; i>=0 ; i--) {
             Identifier_list tmp = Identifier_table.get(i);
+//            System.out.println(i);
             List<Identifier> list = tmp.list;
+//            System.out.println(list);
             for (Identifier identifier : list) {
                 if (identifier.name.equals(name)) {
+//                    System.out.println(name);
                     return identifier.isConst;
                 }
             }
@@ -544,7 +547,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     public String visitConstDef(compUnitParser.ConstDefContext ctx) {  // constDef : Ident ('[' constExp']')* '=' constInitVal ;
 //        String name = ctx.Ident().getText();
 //        Object ret = visitConstInitVal(ctx.constInitVal());
-        if(ctx.constExp() == null) {                                // int
+        if(ctx.constExp().size() == 0) {                                // int
             String name = ctx.Ident().getText();
             Object ret = visitConstInitVal(ctx.constInitVal());
             int val = 0;
@@ -1259,6 +1262,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 }
                 else {
                     String ret = ctx.lVal().Ident().getText(); // 变量名
+                    System.out.println(ret);
                     if(!isConstant(ret)) System.exit(-77); // 检查是否是常量
                     // 需要根据常量名获取值
                     int val = getValue_byName(ret);
