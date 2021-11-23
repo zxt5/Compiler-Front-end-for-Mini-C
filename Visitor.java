@@ -1263,7 +1263,11 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                         ans += R0.name + " = load i32, i32* " + o.name;
                         Base = R0.name;
                     }
-                    else Base = o.name;
+                    else {
+                        Register newReg = Allocate("i32");
+                        ans += newReg.name + " = load i32, i32* " + o.name + "\n";
+                        Base = newReg.name;
+                    }
 
                     int x = 1;
                     for(int j = i+1 ; j<N ;j++) x *= I.length_of_each_dimension.get(j);
