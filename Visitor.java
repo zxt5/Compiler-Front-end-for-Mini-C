@@ -445,7 +445,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 }
             }
             if(ctx.initVal() == null)  {   // 没有显式赋初值
-//                ans += "hhhh\n";
                 Identifier I = new Identifier(name , reg , isConst , isGlobal , D , list , null);
                 cur_identifier_list.add(I);
                 List<String> num = new ArrayList<>();
@@ -469,8 +468,10 @@ public class Visitor extends compUnitBaseVisitor<Object> {
 
                 cur_array_dimension = list ;
                 cur_array_flag = 0;
+                int SIZE = 1;
+                for (int i=0 ;i<list.size();i++) SIZE *= list.get(i);
+                if(!isGlobal)  ans += reg.name + " = alloca " + "[" + SIZE + " x i32]\n";
                 Object ret = visitInitVal(ctx.initVal());
-
                 if(ret instanceof List) {
                     Identifier I = new Identifier(name , reg , isConst , isGlobal , D , list , (List<String>) ret);
                     cur_identifier_list.add(I);
@@ -483,7 +484,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                         ans += "]\n";
                     }
                     else {
-                        ans += reg.name + " = alloca " + "[" + I.size + " x i32]\n";
                         for(int i = 0 ; i < I.size ; i++) {
                             Register R = Allocate("i32");
                             ans += R.name + " = getelementptr" + "[" + I.size + " x i32] , [" + I.size + " x i32]* "
