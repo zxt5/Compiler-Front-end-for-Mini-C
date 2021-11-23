@@ -571,7 +571,10 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 else  S = "global" ;
                 if( ( (List<Integer>) ret ).size() != 0 ) {
                     ans += I.register.name + " = dso_local " + S + " [" + I.size + " x i32] " + "[" ;
-                    for(int i=0;i<I.size;i++) ans += "i32 " + I.num.get(i) + ", " ;
+                    for(int i=0;i<I.size;i++) {
+                        ans += "i32 " + I.num.get(i)  ;
+                        if(i < I.size-1) ans += ", ";
+                    }
                     ans += "]\n";
                 }
                 else {
