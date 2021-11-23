@@ -431,8 +431,8 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             List<Integer> list = new ArrayList<>();                   // 当前数组每一维的长度
             // 分配寄存器
             Register reg ;
-            if(isGlobal) reg = new Register("@" + name);
-            else reg = Allocate();
+            if(isGlobal) reg = new Register("@" + name,"i32*");
+            else reg = Allocate("i32*");
 
             for(int i=0; i<D ;i++) {
                 Object d = visitConstExp(ctx.constExp(i));
@@ -560,7 +560,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             String name = ctx.Ident().getText();
             int D = ctx.constExp().size();
             List<Integer> list = new ArrayList<>();                   // 当前数组每一维的长度
-            Register reg = new Register("@" + name);
+            Register reg = new Register("@" + name,"i32*");
             for(int i=0; i<D ;i++) {
                 Object d = visitConstExp(ctx.constExp(i));
                 if(d instanceof Integer) {
@@ -910,7 +910,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         if(ctx.relExp() != null) {   // RelExp ('<' | '>' | '<=' | '>=') AddExp
             Object l = visitRelExp(ctx.relExp());
             Object r = visitAddExp(ctx.addExp());
+//            System.out.println("debug: " + r);
             String L,R;
+//            System.out.println("debug: " + l+ "  || " + r);
             if( l instanceof Integer ) L = ((Integer) l).toString();
             else {
                 Register l1 = (Register) l ;
@@ -958,12 +960,12 @@ public class Visitor extends compUnitBaseVisitor<Object> {
 
     @Override
     public Object visitAddExp(compUnitParser.AddExpContext ctx) {
+//        System.out.println("debug: " + ctx.getText());
         if(ctx.addExp()==null) {
             return visitMulExp(ctx.mulExp());
         }
         Object l = visitAddExp(ctx.addExp());
         Object r = visitMulExp(ctx.mulExp());
-//        if(isConst || isGlobal) {  // 正在处理常量
         if(l instanceof Integer && r instanceof Integer) {
             Integer l1 = (Integer) l;
             Integer r1 = (Integer) r;
@@ -1007,6 +1009,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
 
     @Override
     public Object visitMulExp(compUnitParser.MulExpContext ctx) {
+//        System.out.println("debug: " + ctx.getText()); -1
         if( ctx.mulExp()==null ) {
             return visitUnaryExp(ctx.unaryExp());
         }
@@ -1132,6 +1135,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             }
             else {
                 if( ctx.unaryExp()==null ) {
+//                    System.out.println("here");
                     return visitPrimaryExp(ctx.primaryExp());
                 }
                 else {
@@ -1154,6 +1158,13 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                         ans += reg.name + " = " + getOp(ctx.unaryOp().getText()) + l + " , " + R.name + "\n";
                         return reg;
                     }
+                    else if(r instanceof Integer){
+                        String Op = getOp(ctx.unaryOp().getText());
+                        Integer R = (Integer) r;
+                        if(Op.equals("-")) R = -R;
+                        return R;
+                    }
+                    else { System.exit(-97); }
                 }
             }
         }
@@ -1171,7 +1182,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     @Override
     public Object visitLVal(compUnitParser.LValContext ctx) {    //  Ident {'[' Exp ']'}
         String name = ctx.Ident().getText();
-//        System.out.println(name + " !!\n"); //debug
         if(!isDefined_allField(name)) {
             System.exit(-10);
         }
@@ -1179,7 +1189,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             System.exit(-11);
         }
         if( ctx.exp().size() == 0 ) {                     // 数
-//                    ans += "debug:  here" +  "\n";
             if(isConstant(name)) {  // 常量返回int
                 int val = getValue_byName(name);
                 return val;
@@ -1193,22 +1202,19 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         }
         else {                                     // 数组
             int N = ctx.exp().size();
-//            ans += "debug:  " + N + "\n";
             Identifier I = getArray_byName(name);
-//            System.out.println(name +" **\n"); //debug
             if(I==null) System.exit(-56);  // 数组未定义
             if(N != I.dimension) System.exit(-57); // 索引维数不对
             String cur_Address = "0";
             for( int i = 0 ; i < N ; i++  ) {
                 Object O = visitExp(ctx.exp(i));
-//                ans += "debug:  " + O + "\n";
                 if( O instanceof Integer ) {
                     int x = 1;
                     for(int j = i+1 ; j<N ;j++) x *= I.length_of_each_dimension.get(j);
                     Register R = Allocate("i32");
                     //  %10 = mul i32 %9, 2
                     ans += R.name + " = mul i32 " + (Integer)O + " , " + x + "\n";
-                    Register R2 = Allocate();
+                    Register R2 = Allocate("i32");
                     ans += R2.name + " = add i32 " + cur_Address + " , " + R.name + "\n";
                     cur_Address = R2.name;
                 }
@@ -1243,9 +1249,11 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     // primaryExp   : '(' exp ')' | lVal | Number ;
     @Override
     public Object visitPrimaryExp(compUnitParser.PrimaryExpContext ctx) {
+//        System.out.println("Debug: " + ctx.getText());
         if(isConst || isGlobal) { // 常量
             if(ctx.exp() == null) {
                 if(ctx.lVal() == null) {  // number
+//                    System.out.println("debug:  " + ctx.Number().getText());
                     int number = Integer.parseInt( getNumber(ctx.Number().getText()) );
                     return number;
                 }
@@ -1264,7 +1272,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         else {  // 变量
             if(ctx.exp() == null) {
                 if(ctx.lVal()==null) {  // Number
+//                    System.out.println("Here");
                     int number = Integer.parseInt( getNumber(ctx.Number().getText()) );
+//                    System.out.println("debug:" + number);
                     return number;
                 }
                 else {
