@@ -1098,6 +1098,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                             } else if (Reg.type.equals("i32*")) {
                                 Register R1 = Allocate("i32");
                                 ans += R1.name + " = load i32, i32* " + Reg.name + "\n";
+                                R = R1.name;
                             } else {
                                 System.exit(-30);
                             }
