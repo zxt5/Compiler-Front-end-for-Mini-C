@@ -266,7 +266,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             Identifier_list tmp = Identifier_table.get(i);
             List<Identifier> list = tmp.list;
             for (Identifier identifier : list) {
-//                System.out.println(identifier.name + "!!\n");  // debug
                 if (identifier.name.equals(name)) {
                     return true;
                 }
@@ -280,12 +279,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         int size = Identifier_table.size();
         for(int i = size-1 ; i>=0 ; i--) {
             Identifier_list tmp = Identifier_table.get(i);
-//            System.out.println(i);
             List<Identifier> list = tmp.list;
-//            System.out.println(list);
             for (Identifier identifier : list) {
                 if (identifier.name.equals(name)) {
-//                    System.out.println(name);
                     return identifier.isConst;
                 }
             }
@@ -302,13 +298,13 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     }
 
     // 获取变量的寄存器号
-    public String getRegister(String name) {
+    public Register getRegister(String name) {
         int size = Identifier_table.size();
         for(int i = size-1 ; i>=0 ; i--) {
             Identifier_list tmp = Identifier_table.get(i);
             List<Identifier> list = tmp.list;
             for (Identifier identifier : list) {
-                if (identifier.name.equals(name)) return identifier.register.name;
+                if (identifier.name.equals(name)) return identifier.register;
             }
         }
         return null;
@@ -407,7 +403,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 ans += reg.name + " = alloca i32\n";
                 // 加入变量池
                 Identifier identifier = new Identifier(name,reg,false,isGlobal);
-//                System.out.println(identifier.name + "\n"); //debug
                 cur_identifier_list.add(identifier);
                 // 赋值
                 if(ctx.initVal()!=null) {
@@ -553,8 +548,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
 
     @Override
     public String visitConstDef(compUnitParser.ConstDefContext ctx) {  // constDef : Ident ('[' constExp']')* '=' constInitVal ;
-//        String name = ctx.Ident().getText();
-//        Object ret = visitConstInitVal(ctx.constInitVal());
         if(ctx.constExp().size() == 0) {                                // int
             String name = ctx.Ident().getText();
             Object ret = visitConstInitVal(ctx.constInitVal());
@@ -661,7 +654,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 if(((Register) lval).type.equals("i32*"))
                     S = ((Register)lval).name;
                 else
-                    S = getRegister(name);
+                    S = getRegister(name).name;
             }
             else System.exit(-71);
             Object ret = visitExp(ctx.exp());
@@ -1198,7 +1191,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                         String Op = ctx.unaryOp().getText();
                         Integer R = (Integer) r;
                         if(Op.equals("-")) R = -R;
-//                        ans += R + "\n";
                         return R;
                     }
                     else { System.exit(-97); }
@@ -1231,10 +1223,10 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 return val;
             }
             else {  // 变量返回寄存器
-                String reg = getRegister(name);
-                Register newReg = Allocate("i32");
-                ans += newReg.name + " = load i32, i32* " + reg + "\n";
-                return newReg;
+                Register reg = getRegister(name);
+//                Register newReg = Allocate("i32");
+//                ans += newReg.name + " = load i32, i32* " + reg + "\n";
+                return reg;
             }
         }
         else {                                     // 数组
@@ -1249,7 +1241,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     int x = 1;
                     for(int j = i+1 ; j<N ;j++) x *= I.length_of_each_dimension.get(j);
                     Register R = Allocate("i32");
-                    //  %10 = mul i32 %9, 2
                     ans += R.name + " = mul i32 " + (Integer)O + " , " + x + "\n";
                     Register R2 = Allocate("i32");
                     ans += R2.name + " = add i32 " + cur_Address + " , " + R.name + "\n";
@@ -1275,7 +1266,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 }
                 else  System.exit(-111);
             }
-            // %3 = getelementptr [20 x i32], [20 x i32]* @a, i32 0, i32 %2 ; %3 类型为 i32*
             Register reg = Allocate("i32*");
             ans += reg.name + " = getelementptr [" + I.size + " x i32], [" + I.size + " x i32]* " + I.register.name
                     + " , i32 0, i32 " + cur_Address + "\n";
@@ -1286,7 +1276,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     // primaryExp   : '(' exp ')' | lVal | Number ;
     @Override
     public Object visitPrimaryExp(compUnitParser.PrimaryExpContext ctx) {
-//        System.out.println("Debug: " + ctx.getText());
         if(isConst || isGlobal) { // 常量
             if(ctx.exp() == null) {
                 if(ctx.lVal() == null) {  // number
