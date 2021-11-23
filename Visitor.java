@@ -509,7 +509,15 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             for(int i=0 ; i<N ;i++) {
                 Object o = visitInitVal(ctx.initVal(i));
                 if(o instanceof Integer) ret.add( ((Integer) o).toString() );
-                else if ( o instanceof Register ) ret.add( ((Register) o).name );
+                else if ( o instanceof Register ) {
+                    Register O = (Register)o;
+                    if(O.type.equals("i32*")) {
+                        Register T = Allocate("i32");
+                        ans += T.name + " load i32 , i32* " + O.name + "\n";
+                        ret.add(T.name);
+                    }
+                    else { ret.add( ((Register) o).name ); }
+                }
                 else if( o instanceof List ) {
                     List<String> O = ((List<String>) o);
                     ret.addAll(O);
@@ -610,7 +618,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             cur_array_flag ++;  //  *********
             for(int i=0 ; i<N ;i++) {
                 Object o = visitConstInitVal(ctx.constInitVal(i));
-                if(o instanceof Integer) ret.add( ((Integer) o).toString() );
+                if(o instanceof Integer) {
+                    ret.add( ((Integer) o).toString() );
+                }
                 else if( o instanceof List ) {
                     List<String> O = ((List<String>) o);
                     ret.addAll(O);
