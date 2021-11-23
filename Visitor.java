@@ -409,9 +409,19 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 // 赋值
                 if(ctx.initVal()!=null) {
                     Object ret = visitInitVal(ctx.initVal());
-                    String L ;
+                    String L = "" ;
                     if(ret instanceof Integer) { L = ((Integer) ret).toString(); }
-                    else L = ((Register) ret).name;
+                    else if( ret instanceof Register ) {
+                        Register R = (Register)ret;
+                        if(R.type.equals("i32")) { L = ((Register) ret).name; }
+                        else if(R.type.equals("i32*")) {
+                            Register Reg =  Allocate("i32");
+                            ans += Reg.name + " = load i32, i32* " + R.name + "\n";
+                            L = Reg.name;
+                        }
+                        else { System.exit(-56); }
+                    }
+                    else System.exit(-57);
                     ans += "store i32 " + L + " , " + "i32* " + reg.name + "\n" ;
                 }
             }
@@ -642,11 +652,19 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             }
             else System.exit(-71);
             Object ret = visitExp(ctx.exp());
-            String R;
+            String R = "";
             if(ret instanceof Integer) { R = ((Integer) ret).toString(); }
-            else {
-                R = ((Register) ret).name;
+            else if( ret instanceof Register ) {
+                Register Reg = (Register)ret;
+                if(Reg.type.equals("i32")) { R = ((Register) ret).name; }
+                else if(Reg.type.equals("i32*")) {
+                    Register Reg1 =  Allocate("i32");
+                    ans += Reg1.name + " = load i32, i32* " + Reg.name + "\n";
+                    R = Reg1.name;
+                }
+                else { System.exit(-58); }
             }
+            else System.exit(-59);
             ans += "store i32 " + R + " , " + "i32* " + S + "\n";
         }
         else if(ctx.Return() != null) {      // 'return' Exp ';'
