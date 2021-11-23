@@ -624,17 +624,26 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     @Override
     public Object visitStmt(compUnitParser.StmtContext ctx) {
         if(ctx.lVal() != null) {             // LVal '=' Exp ';'
+
             String name = ctx.lVal().Ident().getText();
             if(!isDefined_allField(name)) System.exit(-3); // 如果变量未定义，报错
             if(isConstant(name)) System.exit(-4);
-            String curReg = getRegister(name);
+            Object lval = visitLVal(ctx.lVal());
+            String S="";
+            if(lval instanceof Register ) {
+                if(((Register) lval).type.equals("i32*"))
+                    S = ((Register)lval).name;
+                else
+                    S = getRegister(name);
+            }
+            else System.exit(-71);
             Object ret = visitExp(ctx.exp());
             String R;
             if(ret instanceof Integer) { R = ((Integer) ret).toString(); }
             else {
                 R = ((Register) ret).name;
             }
-            ans += "store i32 " + R + " , " + "i32* " + curReg + "\n";
+            ans += "store i32 " + R + " , " + "i32* " + S + "\n";
         }
         else if(ctx.Return() != null) {      // 'return' Exp ';'
             Object reg = visitExp(ctx.exp());
@@ -1081,6 +1090,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             System.exit(-11);
         }
         if( ctx.exp().size() == 0 ) {                     // 数
+//                    ans += "debug:  here" +  "\n";
             if(isConstant(name)) {  // 常量返回int
                 int val = getValue_byName(name);
                 return val;
@@ -1094,6 +1104,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         }
         else {                                     // 数组
             int N = ctx.exp().size();
+//            ans += "debug:  " + N + "\n";
             Identifier I = getArray_byName(name);
 //            System.out.println(name +" **\n"); //debug
             if(I==null) System.exit(-56);  // 数组未定义
@@ -1101,6 +1112,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             String cur_Address = "0";
             for( int i = 0 ; i < N ; i++  ) {
                 Object O = visitExp(ctx.exp(i));
+//                ans += "debug:  " + O + "\n";
                 if( O instanceof Integer ) {
                     int x = 1;
                     for(int j = i+1 ; j<N ;j++) x *= I.length_of_each_dimension.get(j);
