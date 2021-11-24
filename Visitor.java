@@ -101,8 +101,8 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     int cnt_block = 0;  // 块的数量
     public boolean isConst = false;  // 标记是否正在处理常量
     public boolean isGlobal = false;  // 标记是否正在处理全局变量
-    public String cur_while_head;  // 标记当前while的开始，即条件判断
-    public String cur_while_end;   // 标记当前while结束后的代码位置
+    public List<String> cur_while_head = new ArrayList<>();  // 标记当前while的开始，即条件判断
+    public List<String> cur_while_end = new ArrayList<>();   // 标记当前while结束后的代码位置
     boolean is_break_or_continue = false;  // 标记访问的while循环中是否有break或continue
     List<Function> Function_list = new ArrayList<>();     // 函数表
     List<Register> Register_list = new ArrayList<>();     // 寄存器表
@@ -751,7 +751,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             String while_head = newBlock();
             ans += "br label %" + while_head + "\n";
             ans += "\n" + while_head + ":\n";
-            cur_while_head = while_head;
+            cur_while_head.add(while_head);
             Object reg_cond = visitCondition(ctx.condition());
             String COND;
             if(reg_cond instanceof Integer) {
@@ -777,21 +777,23 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             }
             String while_begin = newBlock();
             String while_end = newBlock();
-            cur_while_end = while_end;
+            cur_while_end.add(while_end);
             ans += "br i1 " + COND + " , label %" + while_begin + " , label %" + while_end + "\n";
             ans += "\n" + while_begin + ":\n";
             visitStmt(ctx.stmt().get(0));
+            cur_while_head.remove(while_head);   /// ///////////////!!!!!!!!
+            cur_while_end.remove(while_end);
             ans += "br label %" + while_head + "\n";
             ans += "\n" + while_end + ":\n";
         }
         else if(ctx.Continue() != null) {      // Continue
             is_break_or_continue = true;
-            ans += "br label %" + cur_while_head + "\n";
+            ans += "br label %" + cur_while_head.get(cur_while_head.size()-1) + "\n";
             return 1;
         }
         else if(ctx.Break() != null) {        // break
             is_break_or_continue = true;
-            ans += "br label %" + cur_while_end + "\n";
+            ans += "br label %" + cur_while_end.get(cur_while_end.size()-1) + "\n";
             return 1;
         }
         else if(ctx.block() != null) {         // Block
