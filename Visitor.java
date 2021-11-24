@@ -701,14 +701,14 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 Register reg_cond1 = (Register) reg_cond;
                 if (reg_cond1.type.equals("i32")) {
                     Register cur_reg = Allocate("i1");
-                    ans += cur_reg.name + " = trunc i32 " + reg_cond1.name + " to i1\n";
+                    ans += cur_reg.name + " = icmp ne i32 " + reg_cond1.name + ", 0\n";
                     COND = cur_reg.name;
                 }
                 else if(reg_cond1.type.equals("i32*")) {
                     Register R = Allocate("i32");
                     Register L = Allocate("i1");
                     ans += R.name + " = load i32, i32* " + reg_cond1.name + "\n" ;
-                    ans += L.name + " = trunc i32 " + R.name + " to i1\n";
+                    ans += L.name + " = icmp ne i32 " + R.name + ", 0\n";
                     COND = L.name;
                 }
                 else COND = reg_cond1.name;
@@ -763,14 +763,14 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 Register reg_cond1 = (Register) reg_cond;
                 if (reg_cond1.type.equals("i32")) {
                     Register cur_reg = Allocate("i1");
-                    ans += cur_reg.name + " = trunc i32 " + reg_cond1.name + " to i1\n";
+                    ans += cur_reg.name + " = icmp ne i32 " + reg_cond1.name + ", 0\n";
                     COND = cur_reg.name;
                 }
                 else if(reg_cond1.type.equals("i32*")) {
                     Register R = Allocate("i32");
                     Register L = Allocate("i1");
                     ans += R.name + " = load i32, i32* " + reg_cond1.name + "\n" ;
-                    ans += L.name + " = trunc i32 " + R.name + " to i1\n";
+                    ans += L.name + " = icmp ne i32 " + R.name + ", 0\n";
                     COND = L.name;
                 }
                 else COND = reg_cond1.name;
