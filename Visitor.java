@@ -114,6 +114,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     int cur_array_flag ; // 遍历到正在处理的数组的哪一维
 
     boolean isLeft = false; // 是否正在处理左值
+    boolean isArraying  = false; // 是否在处理数组
 
     public void init() {
         // 初始化函数表
@@ -1227,7 +1228,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             }
             else {  // 变量返回寄存器
                 Register reg = getRegister(name);
-                if(isLeft) {
+                if(isLeft && !isArraying) {
                     return reg;
                 }
                 else {
@@ -1245,7 +1246,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             if(N != I.dimension) System.exit(-57); // 索引维数不对
             String cur_Address = "0";
             for( int i = 0 ; i < N ; i++  ) {
+                isArraying = true;
                 Object O = visitExp(ctx.exp(i));
+                isArraying = false;
                 if( O instanceof Integer ) {
                     int x = 1;
                     for(int j = i+1 ; j<N ;j++) x *= I.length_of_each_dimension.get(j);
@@ -1264,9 +1267,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                         Base = R0.name;
                     }
                     else {
-                        Register newReg = Allocate("i32");
-                        ans += newReg.name + " = load i32, i32* " + o.name + "\n";
-                        Base = newReg.name;
+//                        Register newReg = Allocate("i32");
+//                        ans += newReg.name + " = load i32, i32* " + o.name + "\n";
+                        Base = o.name;
                     }
 
                     int x = 1;
