@@ -136,13 +136,13 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     }
     // 分配寄存器
     public Register Allocate(String type) {
-        String name = "%"+(++cnt);
+        String name = "%_"+(++cnt);
         Register reg = new Register(name,type);
         Register_list.add(reg);
         return reg;
     }
     public Register Allocate() {
-        String name = "%"+(++cnt);
+        String name = "%_"+(++cnt);
         Register reg = new Register(name);
         Register_list.add(reg);
         return reg;
