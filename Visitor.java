@@ -136,13 +136,13 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     }
     // 分配寄存器
     public Register Allocate(String type) {
-        String name = "%_"+(++cnt);
+        String name = "%"+(++cnt);
         Register reg = new Register(name,type);
         Register_list.add(reg);
         return reg;
     }
     public Register Allocate() {
-        String name = "%_"+(++cnt);
+        String name = "%"+(++cnt);
         Register reg = new Register(name);
         Register_list.add(reg);
         return reg;
@@ -313,6 +313,13 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         return null;
     }
 
+    Register Transfer_address_to_int(Register R) {
+        if(!R.type.equals("i32*")) System.exit(-43);
+        Register Reg =  Allocate("i32");
+        ans += Reg.name + " = load i32, i32* " + R.name + "\n";
+        return Reg;
+    }
+
     @Override
     public Object visitCompUnit(compUnitParser.CompUnitContext ctx) {
         if(ctx.decl()!=null) {
@@ -388,9 +395,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     public String visitVarDef(compUnitParser.VarDefContext ctx) {  // Ident ('[' constExp ']')* '=' initVal ;
         String name = ctx.Ident().getText();
         if(isDefined_curField(name)) System.exit(-1);
-
-        if(ctx.constExp().size()==0)  {   ///////////// int
-            if(isGlobal) {
+        // 整数
+        if(ctx.constExp().size()==0)  {
+            if(isGlobal) {  //全局
                 int val = 0;
                 if(ctx.initVal()!=null) {
                     Object ret = visitInitVal(ctx.initVal());
@@ -401,7 +408,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 cur_identifier_list.add(identifier);
                 ans += "@" + name + " = " + "dso_local global i32 " + val + "\n";
             }
-            else {
+            else {  // 局部
                 Register reg = Allocate("i32");
                 ans += reg.name + " = alloca i32\n";
                 // 加入变量池
@@ -416,9 +423,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                         Register R = (Register)ret;
                         if(R.type.equals("i32")) { L = ((Register) ret).name; }
                         else if(R.type.equals("i32*")) {
-                            Register Reg =  Allocate("i32");
-                            ans += Reg.name + " = load i32, i32* " + R.name + "\n";
-                            L = Reg.name;
+                            L = Transfer_address_to_int(R).name;
                         }
                         else { System.exit(-56); }
                     }
@@ -427,7 +432,8 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 }
             }
         }
-        else {                                                        ////////// Array
+        // 数组
+        else {
             int D = ctx.constExp().size();
             List<Integer> list = new ArrayList<>();                   // 当前数组每一维的长度
             // 分配寄存器
@@ -463,7 +469,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 }
             }
             else {   // 进行了显式赋值
-
                 cur_array_dimension = list ;
                 cur_array_flag = 0;
                 int SIZE = 1;
@@ -499,7 +504,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     @Override
     public Object visitInitVal(compUnitParser.InitValContext ctx) {  // initVal : exp | '{' ( initVal (',' initVal )* )? '}'
         if(ctx.exp() != null) {  return visitExp(ctx.exp());  }    // exp
-        else {                                                     // '{' ( initVal (',' initVal )* )? '}'
+        else {     // '{' ( initVal (',' initVal )* )? '}'
             int M = cur_array_dimension.get(cur_array_flag);
             int N = ctx.initVal().size();
             List<String> ret = new ArrayList<>();
@@ -510,9 +515,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 else if ( o instanceof Register ) {
                     Register O = (Register)o;
                     if(O.type.equals("i32*")) {
-                        Register T = Allocate("i32");
-                        ans += T.name + " =  load i32 , i32* " + O.name + "\n";
-                        ret.add(T.name);
+                        ret.add( Transfer_address_to_int(O).name );
                     }
                     else { ret.add( ((Register) o).name ); }
                 }
@@ -540,18 +543,18 @@ public class Visitor extends compUnitBaseVisitor<Object> {
 
     @Override
     public String visitConstDecl(compUnitParser.ConstDeclContext ctx) {   // constDecl  : 'const' Type constDef (',' constDef )* ';' ;
-        this.isConst = true;
+        this.isConst = true;  // -------------------//
         int n = ctx.constDef().size();
         for(int i=0 ; i<n ; i++) {
             visitConstDef(ctx.constDef(i));
         }
-        this.isConst = false;
+        this.isConst = false;  // ------------------//
         return null;
     }
 
     @Override
     public String visitConstDef(compUnitParser.ConstDefContext ctx) {  // constDef : Ident ('[' constExp']')* '=' constInitVal ;
-        if(ctx.constExp().size() == 0) {                                // int
+        if(ctx.constExp().size() == 0) {   // 整数
             String name = ctx.Ident().getText();
             Object ret = visitConstInitVal(ctx.constInitVal());
             int val = 0;
@@ -563,7 +566,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             Identifier identifier = new Identifier(name,null,true,isGlobal,val);
             cur_identifier_list.add(identifier);
         }
-        else {                                                   // array
+        else {   // 数组
             String name = ctx.Ident().getText();
             int D = ctx.constExp().size();
             List<Integer> list = new ArrayList<>();                   // 当前数组每一维的长度
@@ -575,6 +578,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     list.add((Integer) d);
                 }
             }
+            // 设置全局变量
             cur_array_dimension = list ;
             cur_array_flag = 0;
             Object ret = visitConstInitVal(ctx.constInitVal());
@@ -607,7 +611,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         if(ctx.constInitVal().size()==0 && ctx.constExp()!=null)   {                   // constExp
             return visitConstExp(ctx.constExp());
         }
-        else {                                                         // '{' (constInitVal ( ',' constInitVal )* )? '}'
+        else {    // '{' (constInitVal ( ',' constInitVal )* )? '}'
             int M = cur_array_dimension.get(cur_array_flag);
             int N = ctx.constInitVal().size();
             List<String> ret = new ArrayList<>();
@@ -650,9 +654,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             String name = ctx.lVal().Ident().getText();
             if(!isDefined_allField(name)) System.exit(-3); // 如果变量未定义，报错
             if(isConstant(name)) System.exit(-4);
-            isLeft = true;
+            isLeft = true;  // --------------------标记正在处理左值
             Object lval = visitLVal(ctx.lVal());
-            isLeft = false;
+            isLeft = false; //---------------------
             String S="";
             if(lval instanceof Register ) {
                 if(((Register) lval).type.equals("i32*"))
@@ -668,9 +672,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 Register Reg = (Register)ret;
                 if(Reg.type.equals("i32")) { R = ((Register) ret).name; }
                 else if(Reg.type.equals("i32*")) {
-                    Register Reg1 =  Allocate("i32");
-                    ans += Reg1.name + " = load i32, i32* " + Reg.name + "\n";
-                    R = Reg1.name;
+                    R = Transfer_address_to_int(Reg).name;
                 }
                 else { System.exit(-58); }
             }
@@ -705,9 +707,10 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     COND = cur_reg.name;
                 }
                 else if(reg_cond1.type.equals("i32*")) {
-                    Register R = Allocate("i32");
+//                    Register R = Allocate("i32");
+                    Register R = Transfer_address_to_int(reg_cond1);
                     Register L = Allocate("i1");
-                    ans += R.name + " = load i32, i32* " + reg_cond1.name + "\n" ;
+//                    ans += R.name + " = load i32, i32* " + reg_cond1.name + "\n" ;
                     ans += L.name + " = icmp ne i32 " + R.name + ", 0\n";
                     COND = L.name;
                 }
@@ -767,9 +770,10 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     COND = cur_reg.name;
                 }
                 else if(reg_cond1.type.equals("i32*")) {
-                    Register R = Allocate("i32");
+//                    Register R = Allocate("i32");
+                    Register R = Transfer_address_to_int(reg_cond1);
                     Register L = Allocate("i1");
-                    ans += R.name + " = load i32, i32* " + reg_cond1.name + "\n" ;
+//                    ans += R.name + " = load i32, i32* " + reg_cond1.name + "\n" ;
                     ans += L.name + " = icmp ne i32 " + R.name + ", 0\n";
                     COND = L.name;
                 }
@@ -856,8 +860,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 Register T = (Register) l;
                 if(T.type.equals("i32"))  { L = ((Register) l).name; }
                 else if(T.type.equals("i32*")) {
-                    Register Reg1 = Allocate("i32");
-                    ans += Reg1.name + " = load i32 , i32* " + T.name + "\n" ;
+                    Register Reg1 = Transfer_address_to_int(T);
                     Register Reg2 = Allocate("i1");
                     ans += Reg2.name + " = " + "icmp " + "ne" + " i32 " + Reg1.name + " , " +  "0" + "\n";
                     L = Reg2.name ;
@@ -876,8 +879,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 Register T = (Register) r;
                 if(T.type.equals("i32"))  { R = ((Register) r).name; }
                 else if(T.type.equals("i32*")) {
-                    Register Reg1 = Allocate("i32");
-                    ans += Reg1.name + " = load i32 , i32* " + T.name + "\n" ;
+                    Register Reg1 = Transfer_address_to_int(T);
                     Register Reg2 = Allocate("i1");
                     ans += Reg2.name + " = " + "icmp " + "ne" + " i32 " + Reg1.name + " , " +  "0" + "\n";
                     R = Reg2.name ;
@@ -910,9 +912,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     l1 = temp1;
                 }
                 else if(l1.type.equals("i32*")) {
-                    Register Reg = Allocate("i32");
-                    ans += Reg.name + " = load i32, i32* " + l1.name + "\n";
-                    l1 = Reg;
+                    l1 = Transfer_address_to_int(l1);
                 }
                 L = l1.name;
             }
@@ -925,9 +925,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     r1 = temp2;
                 }
                 else if(r1.type.equals("i32*")) {
-                    Register Reg = Allocate("i32");
-                    ans += Reg.name + " = load i32, i32* " + r1.name + "\n";
-                    r1 = Reg;
+                    r1 = Transfer_address_to_int(r1);
                 }
                 R = r1.name;
             }
@@ -955,9 +953,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     l1 = temp1;
                 }
                 else if(l1.type.equals("i32*")) {
-                    Register Reg = Allocate("i32");
-                    ans += Reg.name + " = load i32, i32* " + l1.name + "\n";
-                    l1 = Reg;
+                    l1 = Transfer_address_to_int(l1);
                 }
                 L = l1.name;
             }
@@ -970,9 +966,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     r1 = temp2;
                 }
                 else if(r1.type.equals("i32*")) {
-                    Register Reg = Allocate("i32");
-                    ans += Reg.name + " = load i32, i32* " + r1.name + "\n";
-                    r1 = Reg;
+                    r1 = Transfer_address_to_int(r1);
                 }
                 R = r1.name;
             }
@@ -1013,9 +1007,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             }
             else {
                 if( ((Register)l).type.equals("i32*") ) {
-                    Register Reg = Allocate("i32");
-                    ans += Reg.name + " = load i32, i32* " + ((Register)l).name + "\n";
-                    L = Reg.name;
+                    L = Transfer_address_to_int((Register)l).name;
                 }
                 else {
                     L = ((Register) l).name;
@@ -1026,9 +1018,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             }
             else {
                 if( ((Register)r).type.equals("i32*") ) {
-                    Register Reg = Allocate("i32");
-                    ans += Reg.name + " = load i32, i32* " + ((Register)r).name + "\n";
-                    R = Reg.name;
+                    R = Transfer_address_to_int((Register)r).name;
                 }
                 else {
                     R = ((Register) r).name;
@@ -1061,9 +1051,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             }
             else {
                 if( ((Register)l).type.equals("i32*") ) {
-                    Register Reg = Allocate("i32");
-                    ans += Reg.name + " = load i32, i32* " + ((Register)l).name + "\n";
-                    L = Reg.name;
+                    L = Transfer_address_to_int((Register)l).name;
                 }
                 else {
                     L = ((Register) l).name;
@@ -1074,9 +1062,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             }
             else {
                 if( ((Register)r).type.equals("i32*") ) {
-                    Register Reg = Allocate("i32");
-                    ans += Reg.name + " = load i32, i32* " + ((Register)r).name + "\n";
-                    R = Reg.name;
+                    R = Transfer_address_to_int((Register)r).name;
                 }
                 else {
                     R = ((Register) r).name;
@@ -1125,9 +1111,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                             if (Reg.type.equals("i32")) {
                                 R = ((Register) Reg).name;
                             } else if (Reg.type.equals("i32*")) {
-                                Register R1 = Allocate("i32");
-                                ans += R1.name + " = load i32, i32* " + Reg.name + "\n";
-                                R = R1.name;
+                                R = Transfer_address_to_int(Reg).name;
                             } else {
                                 System.exit(-30);
                             }
@@ -1154,9 +1138,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                             if (Reg.type.equals("i32")) {
                                 R = ((Register) Reg).name;
                             } else if (Reg.type.equals("i32*")) {
-                                Register R1 = Allocate("i32");
-                                ans += R1.name + " = load i32, i32* " + Reg.name + "\n";
-                                R = R1.name;
+                                R = Transfer_address_to_int(Reg).name;
                             } else {
                                 System.exit(-32);
                             }
@@ -1264,13 +1246,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     Register o = (Register) O;
                     String Base;
                     if(o.type.equals("i32*")) {
-                        Register R0 = Allocate("i32");
-                        ans += R0.name + " = load i32, i32* " + o.name;
-                        Base = R0.name;
+                        Base = Transfer_address_to_int(o).name;
                     }
                     else {
-//                        Register newReg = Allocate("i32");
-//                        ans += newReg.name + " = load i32, i32* " + o.name + "\n";
                         Base = o.name;
                     }
 
@@ -1297,15 +1275,13 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         if(isConst || isGlobal) { // 常量
             if(ctx.exp() == null) {
                 if(ctx.lVal() == null) {  // number
-                    int number = Integer.parseInt( getNumber(ctx.Number().getText()) );
-                    return number;
+                    return Integer.parseInt( getNumber(ctx.Number().getText()) );
                 }
                 else {
                     String ret = ctx.lVal().Ident().getText(); // 变量名
                     if(!isConstant(ret)) System.exit(-77); // 检查是否是常量
                     // 需要根据常量名获取值
-                    int val = getValue_byName(ret);
-                    return val;
+                    return getValue_byName(ret);
                 }
             }
             else {
@@ -1315,8 +1291,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         else {  // 变量
             if(ctx.exp() == null) {
                 if(ctx.lVal()==null) {  // Number
-                    int number = Integer.parseInt( getNumber(ctx.Number().getText()) );
-                    return number;
+                    return Integer.parseInt( getNumber(ctx.Number().getText()) );
                 }
                 else {
                     return visitLVal(ctx.lVal());
