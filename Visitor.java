@@ -611,13 +611,18 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             if(isGlobal) reg = new Register("@" + name,"i32*");
             else reg = Allocate("i32*");
 
+            int size = 1;
             for(int i=0; i<D ;i++) {
                 Object d = visitConstExp(ctx.constExp(i));
                 if(d instanceof Integer) {
                     if( ((Integer)d) <= 0 ) System.exit(-87) ;  // 每一维的长度需要大于零
+                    size *= (Integer)d;
                     list.add((Integer) d);
                 }
             }
+
+            reg.type = "[" + size + " x i32]*";
+
             if(ctx.initVal() == null)  {   // 没有显式赋初值
                 Identifier I = new Identifier(name , reg , isConst , isGlobal , D , list , null);
                 cur_identifier_list.add(I);
@@ -630,8 +635,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 else {
                     ans += reg.name + " = alloca " + "[" + I.size + " x i32]\n";
                     for(int i = 0 ; i < I.size ; i++) {
-                        Register R = Allocate("i32");
-//                        ans += "store i32 " + i + ", " + "i32* " + R.name + "\n";
+                        Register R = Allocate("i32*");
                         ans += R.name + " = getelementptr" + "[" + I.size + " x i32] , [" + I.size + " x i32]* "
                                 + reg.name + ", i32 0 , i32 " + i + "\n";
                         ans += "store i32 " + I.num.get(i) + " , i32* " + R.name + "\n";
@@ -658,7 +662,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     }
                     else {
                         for(int i = 0 ; i < I.size ; i++) {
-                            Register R = Allocate("i32");
+                            Register R = Allocate("i32*");
                             ans += R.name + " = getelementptr" + "[" + I.size + " x i32] , [" + I.size + " x i32]* "
                                     + reg.name + ", i32 0 , i32 " + i + "\n";
                             ans += "store i32 " + I.num.get(i) + " , i32* " + R.name + "\n";
