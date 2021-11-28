@@ -53,7 +53,7 @@ class Identifier {
     }
 
     public Identifier (String name , Register register , boolean isConst, boolean isGlobal ,
-                       int dimension , List<Integer> length_of_each_dimension, List<String> num) {  // 数组
+                       int dimension , List<Integer> length_of_each_dimension, List<String> num, String type) {  // 数组
         this.name = name;
         this.register = register;
         this.isConst = isConst;
@@ -66,7 +66,7 @@ class Identifier {
         }
         this.size = size;
         this.num = num ;
-        this.type = "array";
+        this.type = type;
     }
 
 }
@@ -100,7 +100,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     public List<String> cur_while_head = new ArrayList<>();  // 标记当前while的开始，即条件判断
     public List<String> cur_while_end = new ArrayList<>();   // 标记当前while结束后的代码位置
     boolean is_break_or_continue = false;  // 标记访问的while循环中是否有break或continue
-//    List<Function> Function_list = new ArrayList<>();     // 函数表
     List<Register> Register_list = new ArrayList<>();     // 寄存器表
     List<Identifier> cur_identifier_list = null;  // 当前符号表
     List<Identifier_list> Identifier_table = new ArrayList<>(); // 符号表
@@ -138,14 +137,14 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         List<Identifier> L3 = new ArrayList<>();
         List<Integer> I = new ArrayList<>();
         I.add(1);
-        L3.add( new Identifier( "" , Allocate("i32*") , false , false , 1 , I , null) );
+        L3.add( new Identifier( "" , Allocate("i32*") , false , false , 1 , I , null, "subarray") );
         Identifier func_getarray = new Identifier( "getarray" , 1 , L3 , "i32" );
         cur_identifier_list.add(func_getarray);
         List<Identifier> L4 = new ArrayList<>();
         L4.add( new Identifier( "" , Allocate("i32") , false ,false ) );
         List<Integer> I1 = new ArrayList<>();
         I1.add(1);
-        L4.add( new Identifier( "" , Allocate("i32*") , false , false , 1 , I1 , null) );
+        L4.add( new Identifier( "" , Allocate("i32*") , false , false , 1 , I1 , null , "subarray") );
         Identifier func_putarray = new Identifier( "putarray" , 2 , L4 , "void" );
         cur_identifier_list.add(func_putarray);
 
@@ -244,7 +243,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             Identifier_list tmp = Identifier_table.get(i);
             List<Identifier> list = tmp.list;
             for( Identifier identifier : list) {
-                if(identifier.name.equals(name) && identifier.type.equals("array")) {
+                if(identifier.name.equals(name) && (identifier.type.equals("array")||identifier.type.equals("subarray"))) {
                     return identifier;
                 }
             }
@@ -416,13 +415,12 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         Identifier_list cur = new Identifier_list();
         cur_identifier_list = cur.list;
         Identifier_table.add(cur);
+
         if(ctx.funcFParams() != null) {
             parameter_list = visitFuncFParams(ctx.funcFParams());
             parameter_number = parameter_list.size();
             for(int i=0 ; i<parameter_list.size() ; i++) {
-//                Identifier R = parameter_list.get(i);
                 ans += parameter_list.get(i).register.type + " " + parameter_list.get(i).register.name;
-
                 if(i != parameter_list.size()-1 ) ans += ", ";
             }
         }
@@ -482,15 +480,16 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             List<Integer> D = visitDimension(ctx.dimension());
             D.add(0,1);
             int Dimension = D.size() ;
-            if(Dimension == 1) {
-                reg = Allocate("i32*");
-            }
-            else {
-                int tmp = 1;
-                for (Integer integer : D) tmp *= integer;
-                reg = Allocate("[" + tmp + " x i32]*");
-            }
-            ret = new Identifier(name , reg , false , false , Dimension , D , null);
+//            if(Dimension == 1) {
+//                reg = Allocate("i32*");
+//            }
+//            else {
+//                int tmp = 1;
+//                for (Integer integer : D) tmp *= integer;
+//                reg = Allocate("[" + tmp + " x i32]*");
+//            }
+            reg = Allocate("i32*");
+            ret = new Identifier(name , reg , false , false , Dimension , D , null , "subarray");
         }
         cur_identifier_list.add(ret);
         return ret;
@@ -595,7 +594,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                         else if(R.type.equals("i32*")) {
                             L = Transfer_address_to_int(R).name;
                         }
-                        else { System.exit(-56); }
+                        else { System.exit(-560); }
                     }
                     else System.exit(-57);
                     ans += "store i32 " + L + " , " + "i32* " + reg.name + "\n" ;
@@ -620,10 +619,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             Register reg ;
             if(isGlobal) reg = new Register("@" + name , "[" + size + " x i32]*" );
             else reg = Allocate("[" + size + " x i32]*");
-//            reg.type = "[" + size + " x i32]*";
 
             if(ctx.initVal() == null)  {   // 没有显式赋初值
-                Identifier I = new Identifier(name , reg , isConst , isGlobal , D , list , null);
+                Identifier I = new Identifier(name , reg , isConst , isGlobal , D , list , null , "array");
                 cur_identifier_list.add(I);
                 List<String> num = new ArrayList<>();
                 for(int i=0 ; i<I.size ; i++) num.add("0");
@@ -635,6 +633,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     ans += reg.name + " = alloca " + "[" + I.size + " x i32]\n";
                     for(int i = 0 ; i < I.size ; i++) {
                         Register R = Allocate("i32*");
+
                         ans += R.name + " = getelementptr" + "[" + I.size + " x i32] , [" + I.size + " x i32]* "
                                 + reg.name + ", i32 0 , i32 " + i + "\n";
                         ans += "store i32 " + I.num.get(i) + " , i32* " + R.name + "\n";
@@ -649,7 +648,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 if(!isGlobal)  ans += reg.name + " = alloca " + "[" + SIZE + " x i32]\n";
                 Object ret = visitInitVal(ctx.initVal());
                 if(ret instanceof List) {
-                    Identifier I = new Identifier(name , reg , isConst , isGlobal , D , list , (List<String>) ret);
+                    Identifier I = new Identifier(name , reg , isConst , isGlobal , D , list , (List<String>) ret , "array");
                     cur_identifier_list.add(I);
                     if(isGlobal) {
                         ans += reg.name + " = dso_local global " + "[" + I.size + " x i32] [";
@@ -756,7 +755,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             Object ret = visitConstInitVal(ctx.constInitVal());
 
             if(ret instanceof List) {
-                Identifier I = new Identifier(name , reg , isConst , isGlobal , D , list , (List<String>) ret);
+                Identifier I = new Identifier(name , reg , isConst , isGlobal , D , list , (List<String>) ret , "array");
                 cur_identifier_list.add(I);
                 String S;  // constant or global
                 // 测试数据中没有局部的常量数组，但是有时间最好还是考虑一下。
@@ -1274,7 +1273,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             if(ctx.Ident()!=null) { // 函数
                 String real_parameters = "";
                 String name = ctx.Ident().getText(); // 函数名
-//                System.out.println(name);
                 if(!Function_is_defined(name)) System.exit(-5); // 函数未定义，报错
                 Identifier F = get_function_by_name(name); // 函数体
                 if(F == null) System.exit(-116);  // 函数未定义
@@ -1296,6 +1294,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                             Register e = (Register) E;
 //                            System.out.println( "debug:" + e.type + "\n") ;
                             if( e.type.equals("i32") ) {
+//                                System.out.println(F.parameter_list.get(i).name+"\n");
                                 if(type.equals("i32*")) System.exit(-120);
                                 real_parameters += "i32 " + e.name;
                             }
@@ -1382,7 +1381,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         Identifier identifier = get_identifier_by_name(name);
 //        ans += "debug:" + identifier.type + "\n";
 
-        if( ctx.exp().size() == 0 && !identifier.type.equals("array") ) {  // 数
+        if( ctx.exp().size() == 0 && !identifier.type.equals("array") && !identifier.type.equals("subarray")) {  // 数
             if(isConstant(name) ) {  // 常量返回int
                 return getValue_byName(name);
             }
@@ -1439,8 +1438,13 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 else  System.exit(-111);
             }
             Register reg = Allocate("i32*");
-            ans += reg.name + " = getelementptr [" + I.size + " x i32], [" + I.size + " x i32]* " + I.register.name
+            // TODO:分情况
+            if(I.type.equals("array"))
+                ans += reg.name + " = getelementptr [" + I.size + " x i32], [" + I.size + " x i32]* " + I.register.name
                     + " , i32 0, i32 " + cur_Address + "\n";
+            else if(I.type.equals("subarray")) {
+                ans += reg.name + " = getelementptr i32, i32* " + I.register.name + ", i32 " + cur_Address + "\n";
+            }
             curDimension = I.dimension - N ;
             return reg;
         }
