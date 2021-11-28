@@ -483,7 +483,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             D.add(0,1);
             int Dimension = D.size() ;
             if(Dimension == 1) {
-                reg = Allocate("i32");
+                reg = Allocate("i32*");
             }
             else {
                 int tmp = 1;
