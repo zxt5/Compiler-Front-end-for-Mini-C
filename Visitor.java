@@ -66,7 +66,7 @@ class Identifier {
         }
         this.size = size;
         this.num = num ;
-        this.type = "Array";
+        this.type = "array";
     }
 
 }
@@ -244,7 +244,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             Identifier_list tmp = Identifier_table.get(i);
             List<Identifier> list = tmp.list;
             for( Identifier identifier : list) {
-                if(identifier.name.equals(name) && identifier.type.equals("Array")) {
+                if(identifier.name.equals(name) && identifier.type.equals("array")) {
                     return identifier;
                 }
             }
@@ -606,10 +606,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         else {
             int D = ctx.constExp().size();
             List<Integer> list = new ArrayList<>();                   // 当前数组每一维的长度
-            // 分配寄存器
-            Register reg ;
-            if(isGlobal) reg = new Register("@" + name,"i32*");
-            else reg = Allocate("i32*");
 
             int size = 1;
             for(int i=0; i<D ;i++) {
@@ -620,8 +616,11 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     list.add((Integer) d);
                 }
             }
-
-            reg.type = "[" + size + " x i32]*";
+            // 分配寄存器
+            Register reg ;
+            if(isGlobal) reg = new Register("@" + name , "[" + size + " x i32]*" );
+            else reg = Allocate("[" + size + " x i32]*");
+//            reg.type = "[" + size + " x i32]*";
 
             if(ctx.initVal() == null)  {   // 没有显式赋初值
                 Identifier I = new Identifier(name , reg , isConst , isGlobal , D , list , null);
@@ -1376,6 +1375,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         }
 
         Identifier identifier = get_identifier_by_name(name);
+//        ans += "debug:" + identifier.type + "\n";
 
         if( ctx.exp().size() == 0 && !identifier.type.equals("array") ) {  // 数
             if(isConstant(name) ) {  // 常量返回int
