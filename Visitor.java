@@ -420,7 +420,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             parameter_list = visitFuncFParams(ctx.funcFParams());
             parameter_number = parameter_list.size();
             for(int i=0 ; i<parameter_list.size() ; i++) {
+//                Identifier R = parameter_list.get(i);
                 ans += parameter_list.get(i).register.type + " " + parameter_list.get(i).register.name;
+
                 if(i != parameter_list.size()-1 ) ans += ", ";
             }
         }
@@ -432,8 +434,19 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         }
 
         ans += ") {\n";
+
+        for(int i = 0 ; i < parameter_number ; i++) {
+            Identifier I = parameter_list.get(i);
+            Register R = Allocate(I.register.type);
+            ans += R.name + " = alloca " + R.type + "\n" ;
+            ans += "store " + I.register.type + " " + I.register.name + ", " + R.type + "* " + R.name + "\n";
+            I.register = R ;
+        }
+
         visitBlock(ctx.block());
+
         ans += "\n}\n";
+
         // remove Identifier_list from Identifier_table
         Identifier_table.remove(cur);
         if(Identifier_table.size()>0)
@@ -465,12 +478,18 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             ret = new Identifier( name , reg , false , false );
         }
         else {  // 数组
-            Register reg = Allocate("i32*");
+            Register reg;
             List<Integer> D = visitDimension(ctx.dimension());
             D.add(0,1);
             int Dimension = D.size() ;
-            //debug
-//            System.out.println(Dimension);
+            if(Dimension == 1) {
+                reg = Allocate("i32");
+            }
+            else {
+                int tmp = 1;
+                for (Integer integer : D) tmp *= integer;
+                reg = Allocate("[" + tmp + " x i32]*");
+            }
             ret = new Identifier(name , reg , false , false , Dimension , D , null);
         }
         cur_identifier_list.add(ret);
