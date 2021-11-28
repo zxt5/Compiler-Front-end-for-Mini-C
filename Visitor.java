@@ -437,7 +437,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             Identifier I = parameter_list.get(i);
             Register R = Allocate(I.register.type);
             ans += R.name + " = alloca " + R.type + "\n" ;
-            ans += "store " + I.register.type + " " + I.register.name + ", " + R.type + "* " + R.name + "\n";
+            ans += "store " + I.register.type + " " + I.register.name + ", " + R.type + " * " + R.name + "\n";
             I.register = R ;
         }
 
