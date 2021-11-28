@@ -635,7 +635,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 else {
                     ans += reg.name + " = alloca " + "[" + I.size + " x i32]\n";
                     for(int i = 0 ; i < I.size ; i++) {
-                        Register R = Allocate(reg.type);
+                        Register R = Allocate("i32*");
                         ans += R.name + " = getelementptr" + "[" + I.size + " x i32] , [" + I.size + " x i32]* "
                                 + reg.name + ", i32 0 , i32 " + i + "\n";
                         ans += "store i32 " + I.num.get(i) + " , i32* " + R.name + "\n";
@@ -662,7 +662,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     }
                     else {
                         for(int i = 0 ; i < I.size ; i++) {
-                            Register R = Allocate(reg.type);
+                            Register R = Allocate("i32*");
                             ans += R.name + " = getelementptr" + "[" + I.size + " x i32] , [" + I.size + " x i32]* "
                                     + reg.name + ", i32 0 , i32 " + i + "\n";
                             ans += "store i32 " + I.num.get(i) + " , i32* " + R.name + "\n";
@@ -1295,14 +1295,12 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                         }
                         else if( E instanceof Register) {
                             Register e = (Register) E;
+//                            System.out.println( "debug:" + e.type + "\n") ;
                             if( e.type.equals("i32") ) {
                                 if(type.equals("i32*")) System.exit(-120);
                                 real_parameters += "i32 " + e.name;
                             }
                             else if( e.type.equals("i32*") ) {
-                                // debug
-//                                System.out.println(curDimension);
-//                                System.out.println(F.parameter_list.get(i).dimension);
                                 if( curDimension != F.parameter_list.get(i).dimension ) System.exit(-121);
                                 real_parameters += "i32* " + Transfer_address_to_int(e).name;
                             }
@@ -1435,7 +1433,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 }
                 else  System.exit(-111);
             }
-            Register reg = Allocate(I.register.type);
+            Register reg = Allocate("i32*");
             ans += reg.name + " = getelementptr [" + I.size + " x i32], [" + I.size + " x i32]* " + I.register.name
                     + " , i32 0, i32 " + cur_Address + "\n";
             curDimension = I.dimension - N ;
