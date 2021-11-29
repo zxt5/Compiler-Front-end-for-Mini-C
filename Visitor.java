@@ -122,7 +122,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         Identifier func_getint = new Identifier( "getint" , 0 , new ArrayList<Identifier>() , "i32" );
         cur_identifier_list.add(func_getint);
         List<Identifier> L1 = new ArrayList<>();
-        L1.add( new Identifier( "" , Allocate("i32*") , false , false ) );
+        L1.add( new Identifier( "" , Allocate("i32") , false , false ) );
         Identifier func_putint = new Identifier( "putint" , 1 , L1 , "void" );
         cur_identifier_list.add(func_putint);
         Identifier func_getch = new Identifier( "getch" , 0 , new ArrayList<Identifier>() , "i32" );
