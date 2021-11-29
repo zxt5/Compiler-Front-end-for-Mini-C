@@ -746,7 +746,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             String name = ctx.Ident().getText();
             int D = ctx.constExp().size();
             List<Integer> list = new ArrayList<>();                   // 当前数组每一维的长度
-            Register reg = new Register("@" + name,"i32*");
             for(int i=0; i<D ;i++) {
                 Object d = visitConstExp(ctx.constExp(i));
                 if(d instanceof Integer) {
@@ -754,6 +753,11 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     list.add((Integer) d);
                 }
             }
+
+            Register reg = new Register("@" + name,"i32*"); // 分配寄存器
+
+
+
             // 设置全局变量
             cur_array_dimension = list ;
             cur_array_flag = 0;
@@ -762,20 +766,31 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             if(ret instanceof List) {
                 Identifier I = new Identifier(name , reg , isConst , isGlobal , D , list , (List<String>) ret , "array");
                 cur_identifier_list.add(I);
-                String S;  // constant or global
                 // 测试数据中没有局部的常量数组，但是有时间最好还是考虑一下。
-                if(isConst)  S = "constant";
-                else  S = "global" ;
-                if( ( (List<Integer>) ret ).size() != 0 ) {
-                    ans += I.register.name + " = dso_local " + S + " [" + I.size + " x i32] " + "[" ;
-                    for(int i=0;i<I.size;i++) {
-                        ans += "i32 " + I.num.get(i)  ;
-                        if(i < I.size-1) ans += ", ";
+                if(isGlobal) {  // 全局常量数组
+                    String S;  // constant or global
+                    if(isConst)  S = "constant";
+                    else  S = "global" ;
+                    if( ( (List<Integer>) ret ).size() != 0 ) {
+                        ans += I.register.name + " = dso_local " + S + " [" + I.size + " x i32] " + "[" ;
+                        for(int i=0;i<I.size;i++) {
+                            ans += "i32 " + I.num.get(i)  ;
+                            if(i < I.size-1) ans += ", ";
+                        }
+                        ans += "]\n";
                     }
-                    ans += "]\n";
+                    else {
+                        ans += I.register.name + " = dso_local " + S + " [" + I.size + " x i32] " + "zeroinitializer\n" ;
+                    }
                 }
-                else {
-                    ans += I.register.name + " = dso_local " + S + " [" + I.size + " x i32] " + "zeroinitializer\n" ;
+                else {  // 局部常量数组
+                    ans += reg.name + " = alloca " + "[" + I.size + " x i32]\n";
+                    for(int i = 0 ; i < I.size ; i++) {
+                        Register R = Allocate("i32*");
+                        ans += R.name + " = getelementptr" + "[" + I.size + " x i32] , [" + I.size + " x i32]* "
+                                + reg.name + ", i32 0 , i32 " + i + "\n";
+                        ans += "store i32 " + I.num.get(i) + " , i32* " + R.name + "\n";
+                    }
                 }
             }
         }
