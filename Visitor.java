@@ -858,10 +858,14 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         else if(ctx.Return() != null) {      // 'return' (Exp)? ';'
             if(ctx.exp() != null) {
                 Object reg = visitExp(ctx.exp());
-                String R;
+                String R="";
                 if(reg instanceof Integer) { R = ((Integer) reg).toString(); }
-                else {
-                    R = ((Register) reg).name;
+                else if(reg instanceof Register){
+                    Register T = (Register) reg;
+                    if(T.type.equals("i32*")) {
+                        T = Transfer_address_to_int(T);
+                    }
+                    R = T.name;
                 }
                 ans += "ret i32 " + R + "\n";
             }
