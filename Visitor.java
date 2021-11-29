@@ -754,7 +754,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 }
             }
 
-            Register reg = new Register("@" + name,"i32*"); // 分配寄存器
+            Register reg = Allocate("i32*"); // 分配寄存器
 
 
 
