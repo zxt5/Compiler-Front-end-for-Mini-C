@@ -122,7 +122,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         Identifier func_getint = new Identifier( "getint" , 0 , new ArrayList<Identifier>() , "i32" );
         cur_identifier_list.add(func_getint);
         List<Identifier> L1 = new ArrayList<>();
-        L1.add( new Identifier( "" , Allocate("i32") , false , false ) );
+        L1.add( new Identifier( "" , Allocate("i32*") , false , false ) );
         Identifier func_putint = new Identifier( "putint" , 1 , L1 , "void" );
         cur_identifier_list.add(func_putint);
         Identifier func_getch = new Identifier( "getch" , 0 , new ArrayList<Identifier>() , "i32" );
@@ -442,6 +442,10 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         is_handle_function = true;
         cur_function_returnType = returnType;
         visitBlock(ctx.block());
+        if(is_handle_function) {
+            if(returnType.equals("i32")) ans += "ret i32 0\n";
+            else ans += "ret void\n";
+        }
         is_handle_function = false;
 
         ans += "\n}\n";
@@ -907,12 +911,12 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 is_break_or_continue = false;
                 ans += "\n" + block_next + ":\n";
 
-                if(is_handle_function) {
-                    if(cur_function_returnType.equals("i32"))
-                        ans += "ret i32 0\n";
-                    else
-                        ans += "ret void\n";
-                }
+//                if(is_handle_function) {
+//                    if(cur_function_returnType.equals("i32"))
+//                        ans += "ret i32 0\n";
+//                    else
+//                        ans += "ret void\n";
+//                }
             }
             else {   // if ... else ...
                 String block_stmt = newBlock();
@@ -931,12 +935,12 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     ans += "br label %" + block_next + "\n";
                 is_break_or_continue = false;
                 ans += "\n" + block_next + ":\n";
-                if(is_handle_function) {
-                    if(cur_function_returnType.equals("i32"))
-                        ans += "ret i32 0\n";
-                    else
-                        ans += "ret void\n";
-                }
+//                if(is_handle_function) {
+//                    if(cur_function_returnType.equals("i32"))
+//                        ans += "ret i32 0\n";
+//                    else
+//                        ans += "ret void\n";
+//                }
             }
         }
         else if(ctx.While()!=null) {  // While '(' condition ')' stmt
