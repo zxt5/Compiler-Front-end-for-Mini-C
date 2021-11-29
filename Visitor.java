@@ -1057,7 +1057,11 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             }
             else if(l instanceof Register){
                 Register T = (Register) l;
-                if(T.type.equals("i32"))  { L = ((Register) l).name; }
+                if(T.type.equals("i32"))  {
+                    Register reg = Allocate("i1");
+                    ans += reg.name + " = " + "icmp " + "ne" + " i32 " + T.name + " , " +  "0" + "\n";
+                    L = reg.name;
+                }
                 else if(T.type.equals("i32*")) {
                     Register Reg1 = Transfer_address_to_int(T);
                     Register Reg2 = Allocate("i1");
@@ -1076,7 +1080,11 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             }
             else if(r instanceof Register){
                 Register T = (Register) r;
-                if(T.type.equals("i32"))  { R = ((Register) r).name; }
+                if(T.type.equals("i32"))  {
+                    Register reg = Allocate("i1");
+                    ans += reg.name + " = " + "icmp " + "ne" + " i32 " + T.name + " , " +  "0" + "\n";
+                    R = reg.name;
+                }
                 else if(T.type.equals("i32*")) {
                     Register Reg1 = Transfer_address_to_int(T);
                     Register Reg2 = Allocate("i1");
