@@ -108,6 +108,8 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     boolean isLeft = false; // 是否正在处理左值
     boolean isArraying  = false; // 是否在处理数组
     int curDimension = 0;  // 当前传参数组的维数
+    boolean is_handle_function = false; // 是否正在处理函数
+    boolean cur_block_has_return = false; // 当前分支是否有返回语句
 
     public void init() {
 
@@ -436,7 +438,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             I.register = R ;
         }
 
+        is_handle_function = true;
         visitBlock(ctx.block());
+        is_handle_function = false;
 
         ans += "\n}\n";
 
@@ -885,6 +889,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 }
                 else COND = reg_cond1.name;
             }
+
             if(stmt_len == 1) {  // 只有if没有else
                 String block_stmt = newBlock();
                 String block_next = newBlock();
@@ -899,6 +904,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 }
                 is_break_or_continue = false;
                 ans += "\n" + block_next + ":\n";
+                if(is_handle_function) ans += "return\n";
             }
             else {   // if ... else ...
                 String block_stmt = newBlock();
@@ -917,6 +923,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     ans += "br label %" + block_next + "\n";
                 is_break_or_continue = false;
                 ans += "\n" + block_next + ":\n";
+                if(is_handle_function) ans += "return\n";
             }
         }
         else if(ctx.While()!=null) {  // While '(' condition ')' stmt
@@ -1438,9 +1445,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 ans += reg.name + " = getelementptr [" + I.size + " x i32], [" + I.size + " x i32]* " + I.register.name
                     + " , i32 0, i32 " + cur_Address + "\n";
             else if(I.type.equals("subarray")) {
+                // 如果是访问函数形参的数组类型，要先开一个i32*类型寄存器把基地址的值load出来，因为形参数组的寄存器是地址的地址。
                 Register R = Allocate("i32*");
                 ans += R.name + " = load " + R.type + " , " + I.register.type + " * " + I.register.name + "\n";
-//                %5 = load i32* , i32* * %3
                 ans += reg.name + " = getelementptr i32, i32* " + R.name + ", i32 " + cur_Address + "\n";
             }
             curDimension = I.dimension - N ;
