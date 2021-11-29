@@ -1304,6 +1304,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     if( N != n ) System.exit(-118);
                     for(int i=0 ; i<N ; i++ ) {
                         String type = F.parameter_list.get(i).register.type;
+//                        ans += "debug:" + type + "\n";
                         Object E = visitExp(ctx.funcRParams().exp(i));
                         if(E instanceof Integer) {
                             if(type.equals("i32*")) System.exit(-118);  // 参数类型不一致
@@ -1320,7 +1321,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                             else if( e.type.equals("i32*") ) {
                                 if( curDimension != F.parameter_list.get(i).dimension ) System.exit(-121);
                                 if(curDimension ==0 ) {
-                                    real_parameters += "i32* " + Transfer_address_to_int(e).name;
+                                    real_parameters += "i32 " + Transfer_address_to_int(e).name;
                                 }
                                 else {
                                     real_parameters += "i32* " + e.name;
