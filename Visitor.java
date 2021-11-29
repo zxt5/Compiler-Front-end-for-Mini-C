@@ -1,4 +1,4 @@
-import org.antlr.v4.runtime.tree.ErrorNode;
+ import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.RuleNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -432,7 +432,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             Identifier I = parameter_list.get(i);
             Register R = Allocate("i32");
             ans += R.name + " = alloca " + R.type + "\n" ;
-            ans += "store " + I.register.type + " " + I.register.name + ", " + R.type + " * " + R.name + "\n";
+            ans += "store i32"  + " " + I.register.name + ", " + R.type + " * " + R.name + "\n";
             I.register = R ;
         }
 
