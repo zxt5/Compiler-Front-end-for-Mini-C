@@ -1,4 +1,4 @@
- import org.antlr.v4.runtime.tree.ErrorNode;
+import org.antlr.v4.runtime.tree.ErrorNode;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.RuleNode;
 import org.antlr.v4.runtime.tree.TerminalNode;
@@ -430,9 +430,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
 
         for(int i = 0 ; i < parameter_number ; i++) {
             Identifier I = parameter_list.get(i);
-            Register R = Allocate("i32");
+            Register R = Allocate(I.register.type);
             ans += R.name + " = alloca " + R.type + "\n" ;
-            ans += "store i32"  + " " + I.register.name + ", " + R.type + " * " + R.name + "\n";
+            ans += "store " + I.register.type + " " + I.register.name + ", " + R.type + " * " + R.name + "\n";
             I.register = R ;
         }
 
@@ -1438,7 +1438,10 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 ans += reg.name + " = getelementptr [" + I.size + " x i32], [" + I.size + " x i32]* " + I.register.name
                     + " , i32 0, i32 " + cur_Address + "\n";
             else if(I.type.equals("subarray")) {
-                ans += reg.name + " = getelementptr i32, i32* " + I.register.name + ", i32 " + cur_Address + "\n";
+                Register R = Allocate("i32*");
+                ans += R.name + " = load " + R.type + " , " + I.register.type + " * " + I.register.name + "\n";
+//                %5 = load i32* , i32* * %3
+                ans += reg.name + " = getelementptr i32, i32* " + R.name + ", i32 " + cur_Address + "\n";
             }
             curDimension = I.dimension - N ;
             return reg;
