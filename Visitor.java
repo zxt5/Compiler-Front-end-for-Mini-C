@@ -1461,7 +1461,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 isArraying = false;
                 if( O instanceof Integer ) {
                     int x = 1;
-                    for(int j = i+1 ; j<N ;j++) x *= I.length_of_each_dimension.get(j);
+                    for(int j = i+1 ; j<I.dimension ;j++) x *= I.length_of_each_dimension.get(j);
                     Register R = Allocate("i32");
                     ans += R.name + " = mul i32 " + (Integer)O + " , " + x + "\n";
                     Register R2 = Allocate("i32");
