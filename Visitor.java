@@ -428,13 +428,13 @@ public class Visitor extends compUnitBaseVisitor<Object> {
 
         ans += ") {\n";
 
-//        for(int i = 0 ; i < parameter_number ; i++) {
-//            Identifier I = parameter_list.get(i);
-//            Register R = Allocate(I.register.type);
-//            ans += R.name + " = alloca " + R.type + "\n" ;
-//            ans += "store " + I.register.type + " " + I.register.name + ", " + R.type + " * " + R.name + "\n";
-//            I.register = R ;
-//        }
+        for(int i = 0 ; i < parameter_number ; i++) {
+            Identifier I = parameter_list.get(i);
+            Register R = Allocate("i32");
+            ans += R.name + " = alloca " + R.type + "\n" ;
+            ans += "store " + I.register.type + " " + I.register.name + ", " + R.type + " * " + R.name + "\n";
+            I.register = R ;
+        }
 
         visitBlock(ctx.block());
 
