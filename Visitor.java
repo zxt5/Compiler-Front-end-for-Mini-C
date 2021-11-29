@@ -110,6 +110,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     int curDimension = 0;  // 当前传参数组的维数
     boolean is_handle_function = false; // 是否正在处理函数
     boolean cur_block_has_return = false; // 当前分支是否有返回语句
+    String cur_function_returnType = "";
 
     public void init() {
 
@@ -439,6 +440,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
         }
 
         is_handle_function = true;
+        cur_function_returnType = returnType;
         visitBlock(ctx.block());
         is_handle_function = false;
 
@@ -904,7 +906,13 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 }
                 is_break_or_continue = false;
                 ans += "\n" + block_next + ":\n";
-                if(is_handle_function) ans += "return\n";
+
+                if(is_handle_function) {
+                    if(cur_function_returnType.equals("i32"))
+                        ans += "ret i32 0\n";
+                    else
+                        ans += "ret void\n";
+                }
             }
             else {   // if ... else ...
                 String block_stmt = newBlock();
@@ -923,7 +931,12 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     ans += "br label %" + block_next + "\n";
                 is_break_or_continue = false;
                 ans += "\n" + block_next + ":\n";
-                if(is_handle_function) ans += "return\n";
+                if(is_handle_function) {
+                    if(cur_function_returnType.equals("i32"))
+                        ans += "ret i32 0\n";
+                    else
+                        ans += "ret void\n";
+                }
             }
         }
         else if(ctx.While()!=null) {  // While '(' condition ')' stmt
