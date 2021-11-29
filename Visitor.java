@@ -1357,6 +1357,10 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                             ans += temp.name + " = " + "zext i1 " + R.name + " to i32\n";
                             R = temp;
                         }
+                        else if(R.type.equals("i32*")) {
+                            R = Transfer_address_to_int(R);
+                        }
+                        else System.exit(-777);
                         Register reg = Allocate();
                         if(ctx.unaryOp().getText().equals("!")) {
                             reg.type = "i1";
