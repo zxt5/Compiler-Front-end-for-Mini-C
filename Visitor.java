@@ -110,11 +110,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     int curDimension = 0;  // 当前传参数组的维数
 
     public void init() {
-        // 初始化函数表
-//        Function_list.add(new Function("getint","i32"));
-//        Function_list.add(new Function("getch","i32"));
-//        Function_list.add(new Function("putint","void"));
-//        Function_list.add(new Function("putch","void"));
 
         // 初始化全局块
         Identifier_list cur_identifier = new Identifier_list();
@@ -437,7 +432,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             Identifier I = parameter_list.get(i);
             Register R = Allocate(I.register.type);
             ans += R.name + " = alloca " + R.type + "\n" ;
-            ans += "store " + I.register.type + " " + I.register.name + ", " + R.type + " * " + R.name + "\n";
+            ans += "store " + I.register.type + " " + I.register.name + ", " + R.type + " " + R.name + "\n";
             I.register = R ;
         }
 
