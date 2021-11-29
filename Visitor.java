@@ -1360,7 +1360,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                         else if(R.type.equals("i32*")) {
                             R = Transfer_address_to_int(R);
                         }
-                        else System.exit(-777);
+//                        else System.exit(-777);
                         Register reg = Allocate();
                         if(ctx.unaryOp().getText().equals("!")) {
                             reg.type = "i1";
