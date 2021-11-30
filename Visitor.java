@@ -112,6 +112,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     boolean cur_block_has_return = false; // 当前分支是否有返回语句
     String cur_function_returnType = "";
 
+    String cur_block_in = "";
+    String cur_block_out = "";
+
     public void init() {
 
         // 初始化全局块
@@ -941,6 +944,10 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 String block_stmt = newBlock();
                 String block_else = newBlock();
                 String block_next = newBlock();
+
+                cur_block_in = block_stmt;
+                cur_block_out = block_else;
+
                 ans += "br i1 " + COND + " , label %" + block_stmt + " , label %" + block_else + "\n";
                 ans += "\n" + block_stmt + ":\n";
                 is_break_or_continue = false;
@@ -1035,9 +1042,11 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     @Override
     public Object visitLorExp(compUnitParser.LorExpContext ctx) {
         if(ctx.lorExp() != null) {    // LOrExp '||' LAndExp
+            Register ret = Allocate("i1"); // 返回值
+            ans += ret.name + " = alloca i1\n";
+            String L="" , R="";
+
             Object l = visitLorExp(ctx.lorExp());
-            Object r = visitLandExp(ctx.landExp());
-            String L,R;
             if( l instanceof Integer) {
                 Register reg = Allocate("i1");
                 ans += reg.name + " = " + "icmp " + "ne" + " i32 " + ((Integer) l).toString() + " , " +  "0" + "\n";
@@ -1046,6 +1055,19 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             else {
                 L = ((Register) l).name;
             }
+
+            String block_1 = newBlock();
+            String block_2 = newBlock();
+            String block_3 = newBlock();
+
+            ans += "br i1 " + L + " , label %" + block_1 + " , label %" + block_2 + "\n";
+
+            ans += "\n" + block_1 + ":\n"; // A == true , 无需访问B
+            ans += "store i1 " + L + " , " + "i1* " + ret.name + "\n" ;
+            ans += "br label %" + block_3 + "\n";
+
+            ans += "\n" + block_2 + ":\n"; // A == false , 需要访问B
+            Object r = visitLandExp(ctx.landExp());
             if(r instanceof Integer) {
                 Register reg = Allocate("i1");
                 ans += reg.name + " = " + "icmp " + "ne" + " i32 " + ((Integer) r).toString() + " , " +  "0" + "\n";
@@ -1054,9 +1076,14 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             else {
                 R = ((Register) r).name;
             }
-            Register cur_reg = Allocate("i1");
-            ans += cur_reg.name + " = " + "or " + "i1 " + L + " , " + R + "\n";
-            return cur_reg;
+            ans += "store i1 " + R + " , " + "i1* " + ret.name + "\n" ;
+            ans += "br label %" + block_3 + "\n";
+
+            ans += "\n" + block_3 + ":\n";
+            Register Ret = Allocate("i1");
+            ans += Ret.name + " = load i1, i1* " + ret.name + "\n";
+            return Ret;
+
         }
         else {    // landExp
             return visitLandExp(ctx.landExp());
@@ -1066,57 +1093,86 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     @Override
     public Object visitLandExp(compUnitParser.LandExpContext ctx) {
         if(ctx.landExp() != null) {      // LAndExp '&&' EqExp
-            Object l = visitLandExp(ctx.landExp());
-            Object r = visitEqExp(ctx.eqExp());
+            Register ret = Allocate("i1"); // 返回值
+            ans += ret.name + " = alloca i1\n";
             String L="" , R="";
+
+            // L
+            Object l = visitLandExp(ctx.landExp());
+            Register reg0 = null;
             if(l instanceof Integer) {
-                Register reg = Allocate("i1");
-                ans += reg.name + " = " + "icmp " + "ne" + " i32 " + ((Integer) l).toString() + " , " +  "0" + "\n";
-                L = reg.name;
+                reg0 = Allocate("i1");
+                ans += reg0.name + " = " + "icmp " + "ne" + " i32 " + ((Integer) l).toString() + " , " +  "0" + "\n";
+                L = reg0.name;
             }
             else if(l instanceof Register){
                 Register T = (Register) l;
                 if(T.type.equals("i32"))  {
-                    Register reg = Allocate("i1");
-                    ans += reg.name + " = " + "icmp " + "ne" + " i32 " + T.name + " , " +  "0" + "\n";
-                    L = reg.name;
+                    reg0 = Allocate("i1");
+                    ans += reg0.name + " = " + "icmp " + "ne" + " i32 " + T.name + " , " +  "0" + "\n";
+                    L = reg0.name;
                 }
                 else if(T.type.equals("i32*")) {
                     Register Reg1 = Transfer_address_to_int(T);
-                    Register Reg2 = Allocate("i1");
-                    ans += Reg2.name + " = " + "icmp " + "ne" + " i32 " + Reg1.name + " , " +  "0" + "\n";
-                    L = Reg2.name ;
+                    reg0 = Allocate("i1");
+                    ans += reg0.name + " = " + "icmp " + "ne" + " i32 " + Reg1.name + " , " +  "0" + "\n";
+                    L = reg0.name ;
                 }
                 else if(T.type.equals("i1")) { L = T.name; }
                 else { System.exit(-101); }
             }
             else { System.exit(-102); }
 
+            String block_1 = newBlock();
+            String block_2 = newBlock();
+            String block_3 = newBlock();
+
+            ans += "br i1 " + L + " , label %" + block_1 + " , label %" + block_2 + "\n";
+
+//            ans += "\n" + block_2 + ":\n";
+
+            ans += "\n" + block_1 + ":\n"; // A == true , 需要访问B
+
+            // R
+            Object r = visitEqExp(ctx.eqExp());
+            Register reg = null;
             if(r instanceof Integer) {
-                Register reg = Allocate("i1");
+                reg = Allocate("i1");
                 ans += reg.name + " = " + "icmp " + "ne" + " i32 " + ((Integer) r).toString() + " , " +  "0" + "\n";
                 R = reg.name;
             }
             else if(r instanceof Register){
                 Register T = (Register) r;
                 if(T.type.equals("i32"))  {
-                    Register reg = Allocate("i1");
+                    reg = Allocate("i1");
                     ans += reg.name + " = " + "icmp " + "ne" + " i32 " + T.name + " , " +  "0" + "\n";
                     R = reg.name;
                 }
                 else if(T.type.equals("i32*")) {
                     Register Reg1 = Transfer_address_to_int(T);
-                    Register Reg2 = Allocate("i1");
-                    ans += Reg2.name + " = " + "icmp " + "ne" + " i32 " + Reg1.name + " , " +  "0" + "\n";
-                    R = Reg2.name ;
+                    reg = Allocate("i1");
+                    ans += reg.name + " = " + "icmp " + "ne" + " i32 " + Reg1.name + " , " +  "0" + "\n";
+                    R = reg.name ;
                 }
                 else if(T.type.equals("i1")) { R = T.name; }
                 else { System.exit(-103); }
             }
             else { System.exit(-104); }
-            Register cur_reg = Allocate("i1");
-            ans += cur_reg.name + " = " + "and " + "i1 " + L + " , " + R + "\n";
-            return cur_reg;
+
+            ans += "store i1 " + R + " , " + "i1* " + ret.name + "\n" ;
+            ans += "br label %" + block_3 + "\n";
+
+
+            ans += "\n" + block_2 + ":\n";  // A == false
+            ans += "store i1 " + L + " , " + "i1* " + ret.name + "\n" ;
+            ans += "br label %" + block_3 + "\n";
+
+
+            ans += "\n" + block_3 + ":\n";
+            Register Ret = Allocate("i1");
+            ans += Ret.name + " = load i1, i1* " + ret.name + "\n";
+            return Ret;
+
         }
         else {   // eqExp
             return visitEqExp(ctx.eqExp());
@@ -1453,7 +1509,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             int N = ctx.exp().size();
             Identifier I = getArray_byName(name);
             if(I==null) System.exit(-56);  // 数组未定义
-//            if(N != I.dimension) System.exit(-57); // 索引维数不对
             String cur_Address = "0";
             for( int i = 0 ; i < N ; i++  ) {
                 isArraying = true;
