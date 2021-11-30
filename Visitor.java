@@ -1047,14 +1047,29 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             String L="" , R="";
 
             Object l = visitLorExp(ctx.lorExp());
+            Register reg0 = null;
             if( l instanceof Integer) {
                 Register reg = Allocate("i1");
                 ans += reg.name + " = " + "icmp " + "ne" + " i32 " + ((Integer) l).toString() + " , " +  "0" + "\n";
                 L = reg.name;
             }
-            else {
-                L = ((Register) l).name;
+            else if(l instanceof Register){
+                Register T = (Register) l;
+                if(T.type.equals("i32"))  {
+                    reg0 = Allocate("i1");
+                    ans += reg0.name + " = " + "icmp " + "ne" + " i32 " + T.name + " , " +  "0" + "\n";
+                    L = reg0.name;
+                }
+                else if(T.type.equals("i32*")) {
+                    Register Reg1 = Transfer_address_to_int(T);
+                    reg0 = Allocate("i1");
+                    ans += reg0.name + " = " + "icmp " + "ne" + " i32 " + Reg1.name + " , " +  "0" + "\n";
+                    L = reg0.name ;
+                }
+                else if(T.type.equals("i1")) { L = T.name; }
+                else { System.exit(-101); }
             }
+            else { System.exit(-109); }
 
             String block_1 = newBlock();
             String block_2 = newBlock();
@@ -1073,9 +1088,23 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 ans += reg.name + " = " + "icmp " + "ne" + " i32 " + ((Integer) r).toString() + " , " +  "0" + "\n";
                 R = reg.name;
             }
-            else {
-                R = ((Register) r).name;
+            else if(r instanceof Register){
+                Register T = (Register) r;
+                if(T.type.equals("i32"))  {
+                    Register reg = Allocate("i1");
+                    ans += reg.name + " = " + "icmp " + "ne" + " i32 " + T.name + " , " +  "0" + "\n";
+                    R = reg.name;
+                }
+                else if(T.type.equals("i32*")) {
+                    Register Reg1 = Transfer_address_to_int(T);
+                    Register reg = Allocate("i1");
+                    ans += reg.name + " = " + "icmp " + "ne" + " i32 " + Reg1.name + " , " +  "0" + "\n";
+                    R = reg.name ;
+                }
+                else if(T.type.equals("i1")) { R = T.name; }
+                else { System.exit(-103); }
             }
+            else { System.exit(-104); }
             ans += "store i1 " + R + " , " + "i1* " + ret.name + "\n" ;
             ans += "br label %" + block_3 + "\n";
 
