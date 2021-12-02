@@ -1009,7 +1009,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     public Object visitLorExp(compUnitParser.LorExpContext ctx) {
         if(ctx.lorExp() != null) {    // LOrExp '||' LAndExp
             Register ret = Allocate("i1"); // 返回值
-//            ans += ret.name + " = alloca i1\n";
+            ans += ret.name + " = alloca i1\n";
             String L="" , R="";
 
             Object l = visitLorExp(ctx.lorExp());
@@ -1075,9 +1075,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             ans += "br label %" + block_3 + "\n";
 
             ans += "\n" + block_3 + ":\n";
-//            Register Ret = Allocate("i1");
-//            ans += Ret.name + " = load i1, i1* " + ret.name + "\n";
-            return ret;
+            Register Ret = Allocate("i1");
+            ans += Ret.name + " = load i1, i1* " + ret.name + "\n";
+            return Ret;
 
         }
         else {    // landExp
@@ -1089,7 +1089,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     public Object visitLandExp(compUnitParser.LandExpContext ctx) {
         if(ctx.landExp() != null) {      // LAndExp '&&' EqExp
             Register ret = Allocate("i1"); // 返回值
-//            ans += ret.name + " = alloca i1\n";
+            ans += ret.name + " = alloca i1\n";
             String L="" , R="";
 
             // L
@@ -1161,9 +1161,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
 
 
             ans += "\n" + block_3 + ":\n";
-//            Register Ret = Allocate("i1");
-//            ans += Ret.name + " = load i1, i1* " + ret.name + "\n";
-            return ret;
+            Register Ret = Allocate("i1");
+            ans += Ret.name + " = load i1, i1* " + ret.name + "\n";
+            return Ret;
 
         }
         else {   // eqExp
