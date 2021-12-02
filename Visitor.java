@@ -1075,9 +1075,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             ans += "br label %" + block_3 + "\n";
 
             ans += "\n" + block_3 + ":\n";
-            Register Ret = Allocate("i1");
-            ans += Ret.name + " = load i1, i1* " + ret.name + "\n";
-            return Ret;
+//            Register Ret = Allocate("i1");
+//            ans += Ret.name + " = load i1, i1* " + ret.name + "\n";
+            return ret;
 
         }
         else {    // landExp
