@@ -1009,7 +1009,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     public Object visitLorExp(compUnitParser.LorExpContext ctx) {
         if(ctx.lorExp() != null) {    // LOrExp '||' LAndExp
             Register ret = Allocate("i1"); // 返回值
-            ans += ret.name + " = alloca i1\n";
+//            ans += ret.name + " = alloca i1\n";
             String L="" , R="";
 
             Object l = visitLorExp(ctx.lorExp());
@@ -1089,7 +1089,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     public Object visitLandExp(compUnitParser.LandExpContext ctx) {
         if(ctx.landExp() != null) {      // LAndExp '&&' EqExp
             Register ret = Allocate("i1"); // 返回值
-            ans += ret.name + " = alloca i1\n";
+//            ans += ret.name + " = alloca i1\n";
             String L="" , R="";
 
             // L
