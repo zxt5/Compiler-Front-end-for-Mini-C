@@ -109,7 +109,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
     boolean isArraying  = false; // 是否在处理数组
     int curDimension = 0;  // 当前传参数组的维数
     boolean is_handle_function = false; // 是否正在处理函数
-    boolean cur_block_has_return = false; // 当前分支是否有返回语句
     String cur_function_returnType = "";
 
     String cur_block_in = "";
@@ -488,14 +487,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
             List<Integer> D = visitDimension(ctx.dimension());
             D.add(0,1);
             int Dimension = D.size() ;
-//            if(Dimension == 1) {
-//                reg = Allocate("i32*");
-//            }
-//            else {
-//                int tmp = 1;
-//                for (Integer integer : D) tmp *= integer;
-//                reg = Allocate("[" + tmp + " x i32]*");
-//            }
             reg = Allocate("i32*");
             ret = new Identifier(name , reg , false , false , Dimension , D , null , "subarray");
         }
@@ -522,22 +513,10 @@ public class Visitor extends compUnitBaseVisitor<Object> {
 
     @Override
     public Void visitBlock(compUnitParser.BlockContext ctx) {   // '{' (blockItem )* '}'
-        // create new Identifier_list and add it into Identifier_table
-//        Identifier_list cur = new Identifier_list();
-//        cur_identifier_list = cur.list;
-//        Identifier_table.add(cur);
-
         int n = ctx.blockItem().size();
         for(int i=0 ; i<n ; i++) {
             visitBlockItem(ctx.blockItem(i));
         }
-
-        // remove Identifier_list from Identifier_table
-//        Identifier_table.remove(cur);
-//        if(Identifier_table.size()>0)
-//            cur_identifier_list = Identifier_table.get( Identifier_table.size() - 1 ).list;
-//        else
-//            cur_identifier_list = null;
         return null;
     }
 
@@ -932,13 +911,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 }
                 is_break_or_continue = false;
                 ans += "\n" + block_next + ":\n";
-
-//                if(is_handle_function) {
-//                    if(cur_function_returnType.equals("i32"))
-//                        ans += "ret i32 0\n";
-//                    else
-//                        ans += "ret void\n";
-//                }
             }
             else {   // if ... else ...
                 String block_stmt = newBlock();
@@ -961,12 +933,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                     ans += "br label %" + block_next + "\n";
                 is_break_or_continue = false;
                 ans += "\n" + block_next + ":\n";
-//                if(is_handle_function) {
-//                    if(cur_function_returnType.equals("i32"))
-//                        ans += "ret i32 0\n";
-//                    else
-//                        ans += "ret void\n";
-//                }
             }
         }
         else if(ctx.While()!=null) {  // While '(' condition ')' stmt
@@ -1158,10 +1124,7 @@ public class Visitor extends compUnitBaseVisitor<Object> {
 
             ans += "br i1 " + L + " , label %" + block_1 + " , label %" + block_2 + "\n";
 
-//            ans += "\n" + block_2 + ":\n";
-
             ans += "\n" + block_1 + ":\n"; // A == true , 需要访问B
-
             // R
             Object r = visitEqExp(ctx.eqExp());
             Register reg = null;
@@ -1198,9 +1161,9 @@ public class Visitor extends compUnitBaseVisitor<Object> {
 
 
             ans += "\n" + block_3 + ":\n";
-            Register Ret = Allocate("i1");
-            ans += Ret.name + " = load i1, i1* " + ret.name + "\n";
-            return Ret;
+//            Register Ret = Allocate("i1");
+//            ans += Ret.name + " = load i1, i1* " + ret.name + "\n";
+            return ret;
 
         }
         else {   // eqExp
@@ -1472,7 +1435,6 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                         else if(R.type.equals("i32*")) {
                             R = Transfer_address_to_int(R);
                         }
-//                        else System.exit(-777);
                         Register reg = Allocate();
                         if(ctx.unaryOp().getText().equals("!")) {
                             reg.type = "i1";
@@ -1543,34 +1505,27 @@ public class Visitor extends compUnitBaseVisitor<Object> {
                 isArraying = true;
                 Object O = visitExp(ctx.exp(i));
                 isArraying = false;
+                String Base = "";
                 if( O instanceof Integer ) {
-                    int x = 1;
-                    for(int j = i+1 ; j<I.dimension ;j++) x *= I.length_of_each_dimension.get(j);
-                    Register R = Allocate("i32");
-                    ans += R.name + " = mul i32 " + (Integer)O + " , " + x + "\n";
-                    Register R2 = Allocate("i32");
-                    ans += R2.name + " = add i32 " + cur_Address + " , " + R.name + "\n";
-                    cur_Address = R2.name;
+                    Base = ((Integer)O).toString();
                 }
                 else if ( O instanceof Register) {
                     Register o = (Register) O;
-                    String Base;
                     if(o.type.equals("i32*")) {
                         Base = Transfer_address_to_int(o).name;
                     }
                     else {
                         Base = o.name;
                     }
-
-                    int x = 1;
-                    for(int j = i+1 ; j<N ;j++) x *= I.length_of_each_dimension.get(j);
-                    Register R = Allocate("i32");
-                    ans += R.name + " = mul i32 " + Base + " , " + x + "\n";
-                    Register R2 = Allocate("i32");
-                    ans += R2.name + " = add i32 " + cur_Address + " , " + R.name + "\n";
-                    cur_Address = R2.name;
                 }
                 else  System.exit(-111);
+                int x = 1;
+                for(int j = i+1 ; j<I.dimension ;j++) x *= I.length_of_each_dimension.get(j);
+                Register R = Allocate("i32");
+                ans += R.name + " = mul i32 " + Base + " , " + x + "\n";
+                Register R2 = Allocate("i32");
+                ans += R2.name + " = add i32 " + cur_Address + " , " + R.name + "\n";
+                cur_Address = R2.name;
             }
             Register reg = Allocate("i32*");
             // TODO:分情况
