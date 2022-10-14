@@ -6,4 +6,7 @@ Repository for compiler project of BUAA-SE-2022.
 
 **Id:** 18374008 
 
-check out to different branches for detail.
+Compiler front-end for mini-C, take a program as input and output compiled program as LLVM IR.
+
+Optimizations of supporting multidimensional arrays and short-circuit evaluation in conditional statements.
+
